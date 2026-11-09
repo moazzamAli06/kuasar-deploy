@@ -1,0 +1,26 @@
+apiVersion: rabbitmq.com/v1beta1
+kind: RabbitmqCluster
+metadata:
+  name: rabbitmq          # the Service is called "rabbitmq" - config/shared.settings.json expects that host name
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  replicas: 1
+  image: rabbitmq:3.13-management-alpine
+  persistence:
+    storageClassName: do-block-storage
+    storage: 10Gi
+  resources:
+    requests: {cpu: 250m, memory: 512Mi}
+    limits: {cpu: "1", memory: 1Gi}
+  rabbitmq:
+    additionalConfig: |
+      disk_free_limit.absolute = 1GB
+      vm_memory_high_watermark.relative = 0.6
+  override:
+    statefulSet:
+      spec:
+        template:
+          metadata:
+            labels:
+              kuasar.ai/exposure: internal

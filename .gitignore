@@ -1,0 +1,4 @@
+secrets-plain/
+*.pem
+*.key
+.env

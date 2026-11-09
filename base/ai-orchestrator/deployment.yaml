@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-orchestrator
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  replicas: 1
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ai-orchestrator
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ai-orchestrator
+        app.kubernetes.io/part-of: kuasar
+    spec:
+      automountServiceAccountToken: false
+      imagePullSecrets:
+      - name: dockerhub-pull
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile: {type: RuntimeDefault}
+      topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            app.kubernetes.io/name: ai-orchestrator
+      containers:
+      - name: ai-orchestrator
+        image: docker.io/moazzamali06/kuasar-ai-orchestrator:replace
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities: {drop: [ALL]}
+        envFrom:
+        - configMapRef:
+            name: kuasar-ai-orchestrator
+        - secretRef:
+            name: kuasar-ai-orchestrator
+        resources:
+          requests: {cpu: 100m, memory: 256Mi}
+          limits: {cpu: 500m, memory: 512Mi}
+        volumeMounts:
+        - {name: tmp, mountPath: /tmp}
+      volumes:
+      - {name: tmp, emptyDir: {}}

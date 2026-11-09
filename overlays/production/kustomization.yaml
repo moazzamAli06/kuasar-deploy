@@ -1,0 +1,111 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: kuasar-production
+resources:
+- ../../base
+- pdb.yaml
+# Sealed secrets for this environment (see docs/SECRETS.md): add each file here once it exists.
+- sealed
+configMapGenerator:
+- name: kuasar-identity
+  behavior: merge
+  literals:
+    - Email__AppBaseUrl=https://webapp.kuasarai.com
+    - PublicApp__BaseUrl=https://webapp.kuasarai.com
+    - Sso__PublicApiBaseUrl=https://webapp.kuasarai.com
+- name: kuasar-organization
+  behavior: merge
+  literals:
+    - Email__AppBaseUrl=https://webapp.kuasarai.com
+    - PublicApp__BaseUrl=https://webapp.kuasarai.com
+- name: kuasar-sandbox
+  behavior: merge
+  literals:
+    - Sandbox__DockerEndpoint=tcp://sandbox-host.internal:2376
+    - Sandbox__PreviewDomain=preview.kuasarai.net
+    - Sandbox__PreviewEmbedOrigins__0=https://webapp.kuasarai.com
+    - Sandbox__PreviewPort=443
+    - Sandbox__PreviewScheme=https
+- name: kuasar-billing
+  behavior: merge
+  literals:
+    - Billing__CheckoutCancelUrl=https://webapp.kuasarai.com/app/billing
+    - Billing__CheckoutReturnUrl=https://webapp.kuasarai.com/app/billing
+    - Billing__PortalReturnUrl=https://webapp.kuasarai.com/app/billing
+- name: kuasar-gateway
+  behavior: merge
+  literals:
+    - Cors__Origins=https://webapp.kuasarai.com
+patches:
+- target: {kind: Deployment, name: identity}
+  patch: |-
+    - {op: replace, path: /spec/replicas, value: 2}
+- target: {kind: Deployment, name: organization}
+  patch: |-
+    - {op: replace, path: /spec/replicas, value: 2}
+- target: {kind: Deployment, name: platform}
+  patch: |-
+    - {op: replace, path: /spec/replicas, value: 2}
+- target: {kind: Deployment, name: ai}
+  patch: |-
+    - {op: replace, path: /spec/replicas, value: 2}
+- target: {kind: Deployment, name: billing}
+  patch: |-
+    - {op: replace, path: /spec/replicas, value: 2}
+- target: {kind: Deployment, name: gateway}
+  patch: |-
+    - {op: replace, path: /spec/replicas, value: 2}
+- target: {kind: Deployment, name: edge-gateway}
+  patch: |-
+    - {op: replace, path: /spec/replicas, value: 2}
+- target: {kind: Deployment, name: platform-web}
+  patch: |-
+    - {op: replace, path: /spec/replicas, value: 2}
+- target: {kind: Deployment, name: marketing-web}
+  patch: |-
+    - {op: replace, path: /spec/replicas, value: 2}
+- target: {kind: RabbitmqCluster, name: rabbitmq}
+  patch: |-
+    - {op: replace, path: /spec/replicas, value: 3}
+# BEGIN images (edited by tools/set-digest.py; do not hand-edit)
+images:
+- name: docker.io/moazzamali06/kuasar-identity
+  newName: docker.io/moazzamali06/kuasar-identity
+  digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+- name: docker.io/moazzamali06/kuasar-organization
+  newName: docker.io/moazzamali06/kuasar-organization
+  digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+- name: docker.io/moazzamali06/kuasar-project
+  newName: docker.io/moazzamali06/kuasar-project
+  digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+- name: docker.io/moazzamali06/kuasar-audit
+  newName: docker.io/moazzamali06/kuasar-audit
+  digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+- name: docker.io/moazzamali06/kuasar-ai
+  newName: docker.io/moazzamali06/kuasar-ai
+  digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+- name: docker.io/moazzamali06/kuasar-sandbox
+  newName: docker.io/moazzamali06/kuasar-sandbox
+  digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+- name: docker.io/moazzamali06/kuasar-billing
+  newName: docker.io/moazzamali06/kuasar-billing
+  digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+- name: docker.io/moazzamali06/kuasar-platform
+  newName: docker.io/moazzamali06/kuasar-platform
+  digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+- name: docker.io/moazzamali06/kuasar-gateway
+  newName: docker.io/moazzamali06/kuasar-gateway
+  digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+- name: docker.io/moazzamali06/kuasar-platform-web
+  newName: docker.io/moazzamali06/kuasar-platform-web
+  digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+- name: docker.io/moazzamali06/kuasar-marketing-web
+  newName: docker.io/moazzamali06/kuasar-marketing-web
+  digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+- name: docker.io/moazzamali06/kuasar-edge-gateway
+  newName: docker.io/moazzamali06/kuasar-edge-gateway
+  digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+- name: docker.io/moazzamali06/kuasar-ai-orchestrator
+  newName: docker.io/moazzamali06/kuasar-ai-orchestrator
+  digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+# END images

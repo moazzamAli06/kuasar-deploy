@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: platform-web
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  replicas: 1
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: platform-web
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: platform-web
+        app.kubernetes.io/part-of: kuasar
+    spec:
+      automountServiceAccountToken: false
+      imagePullSecrets:
+      - name: dockerhub-pull
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101
+        runAsGroup: 101
+        fsGroup: 101
+        seccompProfile: {type: RuntimeDefault}
+      topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            app.kubernetes.io/name: platform-web
+      containers:
+      - name: platform-web
+        image: docker.io/moazzamali06/kuasar-platform-web:replace
+        imagePullPolicy: IfNotPresent
+        ports:
+        - {name: http, containerPort: 8080}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities: {drop: [ALL]}
+        envFrom:
+        - configMapRef:
+            name: kuasar-platform-web
+        resources:
+          requests: {cpu: 100m, memory: 256Mi}
+          limits: {cpu: 500m, memory: 512Mi}
+        startupProbe:
+          httpGet: {path: /, port: http}
+          periodSeconds: 3
+          failureThreshold: 40
+        livenessProbe:
+          httpGet: {path: /, port: http}
+          periodSeconds: 15
+          timeoutSeconds: 3
+        readinessProbe:
+          httpGet: {path: /, port: http}
+          periodSeconds: 10
+          timeoutSeconds: 3
+        volumeMounts:
+        - {name: tmp, mountPath: /tmp}
+      volumes:
+      - {name: tmp, emptyDir: {}}

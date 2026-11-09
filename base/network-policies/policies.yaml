@@ -1,0 +1,106 @@
+# Default deny, then explicit allows. Pod labels used here:
+#   kuasar.ai/edge-only        only cloudflared may call it (edge-gateway, marketing-web)
+#   kuasar.ai/db               may reach managed PostgreSQL (port 25060)
+#   kuasar.ai/egress-https     may reach the internet on 443 (AI providers, GitHub, Stripe, e-mail)
+#   kuasar.ai/egress-internet  cloudflared tunnel (7844 and 443)
+#   kuasar.ai/egress-sandbox   may reach the sandbox Docker hosts (2376)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: default-deny}
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: allow-dns}
+spec:
+  podSelector: {}
+  policyTypes: [Egress]
+  egress:
+  - to:
+    - namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: kube-system}}
+    ports:
+    - {protocol: UDP, port: 53}
+    - {protocol: TCP, port: 53}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: allow-in-namespace}
+spec:
+  podSelector:
+    matchExpressions:
+    - {key: kuasar.ai/edge-only, operator: DoesNotExist}
+  policyTypes: [Ingress, Egress]
+  ingress:
+  - from:
+    - podSelector: {}
+  egress:
+  - to:
+    - podSelector: {}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: edge-only-from-cloudflared}
+spec:
+  podSelector:
+    matchLabels: {kuasar.ai/edge-only: "true"}
+  policyTypes: [Ingress, Egress]
+  ingress:
+  - from:
+    - podSelector: {matchLabels: {app.kubernetes.io/name: cloudflared}}
+  egress:
+  - to:
+    - podSelector: {}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: db-egress}
+spec:
+  podSelector:
+    matchLabels: {kuasar.ai/db: "true"}
+  policyTypes: [Egress]
+  egress:
+  - ports:
+    - {protocol: TCP, port: 25060}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: https-egress}
+spec:
+  podSelector:
+    matchLabels: {kuasar.ai/egress-https: "true"}
+  policyTypes: [Egress]
+  egress:
+  - to:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+        except: [10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 169.254.0.0/16]
+    ports:
+    - {protocol: TCP, port: 443}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: cloudflared-egress}
+spec:
+  podSelector:
+    matchLabels: {kuasar.ai/egress-internet: "true"}
+  policyTypes: [Egress]
+  egress:
+  - ports:
+    - {protocol: TCP, port: 7844}
+    - {protocol: UDP, port: 7844}
+    - {protocol: TCP, port: 443}
+  - to:
+    - podSelector: {}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: sandbox-host-egress}
+spec:
+  podSelector:
+    matchLabels: {kuasar.ai/egress-sandbox: "true"}
+  policyTypes: [Egress]
+  egress:
+  - ports:
+    - {protocol: TCP, port: 2376}

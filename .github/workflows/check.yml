@@ -1,0 +1,26 @@
+name: check
+on: { pull_request: {}, push: { branches: [main] } }
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install kubeconform
+        run: |
+          curl -sSL https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz | tar xz kubeconform
+      - name: Render and validate each overlay
+        run: |
+          set -eu
+          for env in staging production; do
+            kubectl kustomize overlays/$env > /tmp/$env.yaml
+            ./kubeconform -strict -ignore-missing-schemas -summary /tmp/$env.yaml
+          done
+      - name: Policies
+        run: python3 tools/check-policies.py /tmp/staging.yaml /tmp/production.yaml
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: gitleaks/gitleaks-action@v2
+        env: { GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }

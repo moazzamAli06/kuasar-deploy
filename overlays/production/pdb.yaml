@@ -1,0 +1,71 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata: {name: identity}
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels: {app.kubernetes.io/name: identity}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata: {name: organization}
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels: {app.kubernetes.io/name: organization}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata: {name: platform}
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels: {app.kubernetes.io/name: platform}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata: {name: ai}
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels: {app.kubernetes.io/name: ai}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata: {name: billing}
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels: {app.kubernetes.io/name: billing}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata: {name: gateway}
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels: {app.kubernetes.io/name: gateway}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata: {name: edge-gateway}
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels: {app.kubernetes.io/name: edge-gateway}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata: {name: platform-web}
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels: {app.kubernetes.io/name: platform-web}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata: {name: marketing-web}
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels: {app.kubernetes.io/name: marketing-web}

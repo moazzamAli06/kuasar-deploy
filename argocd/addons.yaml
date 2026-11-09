@@ -1,0 +1,25 @@
+# Cluster add-ons Kuasar needs. Apply once (kubectl apply -n argocd -f argocd/addons.yaml). VERIFY each version is current before use.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata: {name: sealed-secrets, namespace: argocd}
+spec:
+  project: default
+  source:
+    repoURL: https://bitnami-labs.github.io/sealed-secrets
+    chart: sealed-secrets
+    targetRevision: 2.16.2
+    helm: {releaseName: sealed-secrets}
+  destination: {server: https://kubernetes.default.svc, namespace: sealed-secrets}
+  syncPolicy: {automated: {prune: true, selfHeal: true}, syncOptions: [CreateNamespace=true]}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata: {name: rabbitmq-operator, namespace: argocd}
+spec:
+  project: default
+  source:
+    repoURL: git@github.com:moazzamAli06/kuasar-deploy.git
+    targetRevision: main
+    path: platform/rabbitmq-operator
+  destination: {server: https://kubernetes.default.svc, namespace: rabbitmq-system}
+  syncPolicy: {automated: {prune: true, selfHeal: true}, syncOptions: [CreateNamespace=true, ServerSideApply=true]}

@@ -1,0 +1,29 @@
+# Two applications from one definition. Staging syncs by itself; production waits for a person (Sync button / argocd app sync).
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata: {name: kuasar, namespace: argocd}
+spec:
+  generators:
+  - list:
+      elements:
+      - {env: staging, namespace: kuasar-staging}
+      - {env: production, namespace: kuasar-production}
+  template:
+    metadata:
+      name: "kuasar-{{env}}"
+    spec:
+      project: kuasar
+      source:
+        repoURL: git@github.com:moazzamAli06/kuasar-deploy.git
+        targetRevision: main
+        path: "overlays/{{env}}"
+      destination: {server: https://kubernetes.default.svc, namespace: "{{namespace}}"}
+      syncPolicy:
+        syncOptions: [CreateNamespace=true, ServerSideApply=true]
+        retry: {limit: 3, backoff: {duration: 30s, factor: 2, maxDuration: 5m}}
+  templatePatch: |
+    {{- if eq .env "staging" }}
+    spec:
+      syncPolicy:
+        automated: {prune: true, selfHeal: true}
+    {{- end }}

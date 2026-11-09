@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata: {name: kuasar, namespace: argocd}
+spec:
+  description: Kuasar AI
+  sourceRepos:
+  - git@github.com:moazzamAli06/kuasar-deploy.git
+  destinations:
+  - {server: https://kubernetes.default.svc, namespace: "kuasar-*"}
+  clusterResourceWhitelist: []
+  namespaceResourceWhitelist:
+  - {group: "", kind: "*"}
+  - {group: apps, kind: "*"}
+  - {group: batch, kind: "*"}
+  - {group: policy, kind: PodDisruptionBudget}
+  - {group: networking.k8s.io, kind: NetworkPolicy}
+  - {group: rabbitmq.com, kind: RabbitmqCluster}
+  - {group: bitnami.com, kind: SealedSecret}
+  roles:
+  - name: release-manager
+    description: May sync production
+    policies:
+    - p, proj:kuasar:release-manager, applications, sync, kuasar/kuasar-production, allow
+    groups: [REPLACE_ORG:release-managers]
