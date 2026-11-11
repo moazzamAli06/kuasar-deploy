@@ -2,3 +2,7 @@ secrets-plain/
 *.pem
 *.key
 .env
+
+.DS_Store
+local/.env.local
+local/.rendered-*

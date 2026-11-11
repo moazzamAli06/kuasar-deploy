@@ -14,6 +14,7 @@ argocd/          AppProject, ApplicationSet (staging + production), add-ons (Sea
 platform/        cluster add-on manifests
 tools/           set-digest.py, promote.py, seal-secrets.sh, check-policies.py
 docs/SECRETS.md  every secret and key each environment needs
+docs/SANDBOX-HOST.md  the separate gVisor machine that runs customer code
 ```
 
 ## Before the first deploy (checklist)

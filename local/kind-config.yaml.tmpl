@@ -1,0 +1,19 @@
+# Rendered by lib.sh (render_kind_config) with the values of versions.env and ports.env. Do not use directly.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: @CLUSTER_NAME@
+containerdConfigPatches:
+- |-
+  [plugins."io.containerd.grpc.v1.cri".registry]
+    config_path = "/etc/containerd/certs.d"
+nodes:
+- role: control-plane
+  image: @KIND_NODE_IMAGE@
+  extraPortMappings:
+  - {containerPort: 30080, hostPort: @EDGE_PORT@, listenAddress: "127.0.0.1"}
+  - {containerPort: 30300, hostPort: @MARKETING_PORT@, listenAddress: "127.0.0.1"}
+  - {containerPort: 30432, hostPort: @PG_PORT@, listenAddress: "127.0.0.1"}
+  - {containerPort: 30101, hostPort: @BRIDGE_PROJECT_PORT@, listenAddress: "127.0.0.1"}
+  - {containerPort: 30102, hostPort: @BRIDGE_ORGANIZATION_PORT@, listenAddress: "127.0.0.1"}
+  - {containerPort: 30103, hostPort: @BRIDGE_BILLING_PORT@, listenAddress: "127.0.0.1"}
+  - {containerPort: 30672, hostPort: @BRIDGE_RABBITMQ_PORT@, listenAddress: "127.0.0.1"}

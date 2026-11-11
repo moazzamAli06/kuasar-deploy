@@ -1,0 +1,14 @@
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: sandbox-host
+  labels:
+    kubernetes.io/service-name: sandbox
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+addressType: IPv4
+ports:
+- {name: http, port: 8080, protocol: TCP}
+- {name: preview, port: 8090, protocol: TCP}
+endpoints:
+- addresses: ["192.0.2.10"]     # PLACEHOLDER (documentation range): each overlay sets the host's private address

@@ -7,6 +7,7 @@ resources:
 configMapGenerator:
 - name: kuasar-organization
   literals:
+    - Database__MaxPoolSize=8
     - Dev__ReturnInvitationTokens=false
     - Email__FromAddress=no-reply@kuasar.ai
     - Email__LogBodies=false

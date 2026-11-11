@@ -8,7 +8,7 @@ Edits only the block between "BEGIN images" and "END images" in <overlay>/kustom
 import re, sys
 
 overlay, name, ref = sys.argv[1:4]
-m = re.fullmatch(r"(docker\.io/[\w.-]+/kuasar-[\w-]+)@(sha256:[0-9a-f]{64})", ref)
+m = re.fullmatch(r"((?:docker\.io/[\w.-]+|localhost:\d+)/kuasar-[\w-]+)@(sha256:[0-9a-f]{64})", ref)
 if not m or not m.group(1).endswith("kuasar-" + name):
     sys.exit(f"bad image reference for {name}: {ref}")
 new_name, digest = m.groups()

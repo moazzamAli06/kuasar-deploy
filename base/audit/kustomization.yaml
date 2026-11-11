@@ -7,4 +7,4 @@ resources:
 configMapGenerator:
 - name: kuasar-audit
   literals:
-    - KUASAR_PLACEHOLDER=1
+    - Database__MaxPoolSize=5

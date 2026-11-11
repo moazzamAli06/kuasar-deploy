@@ -132,7 +132,7 @@ Create the namespace's secrets BEFORE the first sync: the migration Jobs and Dep
 |---|---|---|
 | `ConnectionStrings__Project` | yes | database OWNER login, used only by the migrate Job |
 
-## `kuasar-sandbox`
+## `kuasar-sandbox` (NOT USED IN THE CLUSTER: these values go in `/etc/kuasar/sandbox.env` on the execution host, see SANDBOX-HOST.md)
 
 | Key | Required | Note |
 |---|---|---|

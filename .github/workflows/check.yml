@@ -11,12 +11,12 @@ jobs:
       - name: Render and validate each overlay
         run: |
           set -eu
-          for env in staging production; do
+          for env in staging production local; do
             kubectl kustomize overlays/$env > /tmp/$env.yaml
             ./kubeconform -strict -ignore-missing-schemas -summary /tmp/$env.yaml
           done
       - name: Policies
-        run: python3 tools/check-policies.py /tmp/staging.yaml /tmp/production.yaml
+        run: python3 tools/check-policies.py /tmp/staging.yaml /tmp/production.yaml /tmp/local.yaml
   secrets:
     runs-on: ubuntu-latest
     steps:

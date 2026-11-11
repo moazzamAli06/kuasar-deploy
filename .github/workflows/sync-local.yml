@@ -1,0 +1,31 @@
+name: sync-local
+# Keeps the "local" branch (followed by developer machines) equal to main, with overlays/local carrying the SAME image digests as staging.
+# The branch is rebuilt each time (reset to main + one commit), so never commit to it by hand.
+on:
+  push: { branches: [main] }
+  workflow_dispatch: {}
+permissions:
+  contents: write
+concurrency: { group: sync-local, cancel-in-progress: true }
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: Copy staging digests into overlays/local
+        run: python3 tools/promote.py overlays/staging overlays/local
+      - name: Render and check before publishing
+        run: |
+          set -eu
+          kubectl kustomize overlays/local > /tmp/local.yaml
+          pip install pyyaml >/dev/null
+          python3 tools/check-policies.py /tmp/local.yaml
+      - name: Publish branch local
+        run: |
+          set -eu
+          git config user.name "kuasar-ci"; git config user.email "ci@users.noreply.github.com"
+          git checkout -B local
+          git add -A
+          git diff --cached --quiet || git commit -m "local: staging digests from ${GITHUB_SHA::12}"
+          git push --force origin local

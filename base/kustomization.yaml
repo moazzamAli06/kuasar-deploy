@@ -8,6 +8,7 @@ resources:
 - audit/
 - ai/
 - sandbox/
+- sandbox-host/
 - billing/
 - platform/
 - gateway/
@@ -24,6 +25,16 @@ labels:
 - pairs: {app.kubernetes.io/part-of: kuasar}
   includeSelectors: false
 patches:
+- target: {kind: Deployment, name: gateway}
+  patch: |-
+    - op: add
+      path: /spec/template/metadata/labels/kuasar.ai~1egress-sandbox
+      value: "true"
+- target: {kind: Deployment, name: ai}
+  patch: |-
+    - op: add
+      path: /spec/template/metadata/labels/kuasar.ai~1egress-sandbox
+      value: "true"
 - target: {kind: Deployment, name: identity}
   patch: |-
     - op: add
@@ -49,11 +60,6 @@ patches:
     - op: add
       path: /spec/template/metadata/labels/kuasar.ai~1db
       value: "true"
-- target: {kind: Deployment, name: sandbox}
-  patch: |-
-    - op: add
-      path: /spec/template/metadata/labels/kuasar.ai~1db
-      value: "true"
 - target: {kind: Deployment, name: billing}
   patch: |-
     - op: add
@@ -94,12 +100,7 @@ patches:
     - op: add
       path: /spec/template/metadata/labels/kuasar.ai~1egress-https
       value: "true"
-- target: {kind: Deployment, name: sandbox}
-  patch: |-
-    - op: add
-      path: /spec/template/metadata/labels/kuasar.ai~1egress-sandbox
-      value: "true"
-- target: {kind: Deployment, name: "(identity|organization|project|audit|ai|sandbox|billing|platform|gateway)"}
+- target: {kind: Deployment, name: "(identity|organization|project|audit|ai|billing|platform|gateway)"}
   patch: |-
     - op: add
       path: /spec/template/metadata/labels/kuasar.ai~1exposure

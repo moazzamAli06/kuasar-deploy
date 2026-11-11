@@ -61,6 +61,7 @@ spec:
         volumeMounts:
         - {name: tmp, mountPath: /tmp}
         - {name: access, mountPath: /etc/nginx/access.conf, subPath: access.conf, readOnly: true}
+        - {name: access, mountPath: /etc/nginx/trusted-proxies.conf, subPath: trusted-proxies.conf, readOnly: true}
       volumes:
       - {name: tmp, emptyDir: {}}
       - {name: access, configMap: {name: edge-access}}

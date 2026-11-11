@@ -17,14 +17,6 @@ configMapGenerator:
   literals:
     - Email__AppBaseUrl=https://staging-webapp.kuasarai.com
     - PublicApp__BaseUrl=https://staging-webapp.kuasarai.com
-- name: kuasar-sandbox
-  behavior: merge
-  literals:
-    - Sandbox__DockerEndpoint=tcp://sandbox-host.internal:2376
-    - Sandbox__PreviewDomain=preview-staging.kuasarai.net
-    - Sandbox__PreviewEmbedOrigins__0=https://staging-webapp.kuasarai.com
-    - Sandbox__PreviewPort=443
-    - Sandbox__PreviewScheme=https
 - name: kuasar-billing
   behavior: merge
   literals:
@@ -35,7 +27,16 @@ configMapGenerator:
   behavior: merge
   literals:
     - Cors__Origins=https://staging-webapp.kuasarai.com
-patches: []
+patches:
+- target: {kind: EndpointSlice, name: sandbox-host}
+  patch: |-
+    - {op: replace, path: /endpoints/0/addresses/0, value: "192.0.2.10"}   # TODO: the staging execution host's PRIVATE address
+- target: {kind: NetworkPolicy, name: sandbox-host-egress}
+  patch: |-
+    - {op: replace, path: /spec/egress/0/to/0/ipBlock/cidr, value: "192.0.2.10/32"}
+- target: {kind: NetworkPolicy, name: sandbox-host-ingress}
+  patch: |-
+    - {op: replace, path: /spec/ingress/0/from/0/ipBlock/cidr, value: "10.116.0.0/20"}   # TODO: the VPC range that contains the cluster nodes
 # BEGIN images (edited by tools/set-digest.py; do not hand-edit)
 images:
 - name: docker.io/moazzamali06/kuasar-identity
