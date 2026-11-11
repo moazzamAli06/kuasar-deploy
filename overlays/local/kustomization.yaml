@@ -101,41 +101,41 @@ patches:
 images:
 - name: docker.io/moazzamali06/kuasar-identity
   newName: docker.io/moazzamali06/kuasar-identity
-  digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+  digest: sha256:9a8efaae6e9896d4330688e95805838be2e1c339dca2110f1f315921444cfa1e
 - name: docker.io/moazzamali06/kuasar-organization
   newName: docker.io/moazzamali06/kuasar-organization
-  digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+  digest: sha256:90069cab1d8a2d54a86062ea3bf6da57c2b86618314631e98e8114afbdc6f755
 - name: docker.io/moazzamali06/kuasar-project
   newName: docker.io/moazzamali06/kuasar-project
-  digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+  digest: sha256:1be33749d31a5ce9bda6a38aea9337c7a69ed1b934227961654e3c6de7142507
 - name: docker.io/moazzamali06/kuasar-audit
   newName: docker.io/moazzamali06/kuasar-audit
-  digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+  digest: sha256:ea46454099bdedf0328f413d342819d577efa12d3f76134f50be7388fc691f40
 - name: docker.io/moazzamali06/kuasar-ai
   newName: docker.io/moazzamali06/kuasar-ai
-  digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+  digest: sha256:227a89b2764badffe75f0e08881cacfdb70ea82d3ba71784b131fa1852691a46
 - name: docker.io/moazzamali06/kuasar-sandbox
   newName: docker.io/moazzamali06/kuasar-sandbox
-  digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+  digest: sha256:1ad9975b3a8d2ff667ae8d0e22b220d1a6534bf79d5e941c24252bdadfda7696
 - name: docker.io/moazzamali06/kuasar-billing
   newName: docker.io/moazzamali06/kuasar-billing
-  digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+  digest: sha256:b8a6146e419a2c2d405890a3ee7f35a0767de6259b5947713ef91898b938c29a
 - name: docker.io/moazzamali06/kuasar-platform
   newName: docker.io/moazzamali06/kuasar-platform
-  digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+  digest: sha256:c2ef1ec726c223287e9e6b8841794fec77b0f28e7732c9ffee3adda38d88cd42
 - name: docker.io/moazzamali06/kuasar-gateway
   newName: docker.io/moazzamali06/kuasar-gateway
-  digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+  digest: sha256:e79705c84fdd26a31a261a02b2de1c141bc6c253dcd04f70feec65a8e31a8808
 - name: docker.io/moazzamali06/kuasar-platform-web
   newName: docker.io/moazzamali06/kuasar-platform-web
-  digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+  digest: sha256:57d5ae85ee95a681ca6a0b68338b8f727eebfd23c12a32a7d91054b96dc91e0f
 - name: docker.io/moazzamali06/kuasar-marketing-web
   newName: docker.io/moazzamali06/kuasar-marketing-web
-  digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+  digest: sha256:fdf074de4a97a9be78df5c7dca79eb51b8165893facc5ad5195b0fa6f9622293
 - name: docker.io/moazzamali06/kuasar-edge-gateway
   newName: docker.io/moazzamali06/kuasar-edge-gateway
-  digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+  digest: sha256:b349c4a7452ea64a6dba6475808ddfe04939efecc63c818dea2f43477cf5fcdb
 - name: docker.io/moazzamali06/kuasar-ai-orchestrator
   newName: docker.io/moazzamali06/kuasar-ai-orchestrator
-  digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+  digest: sha256:d03c6345e62ac0053c667f6852503ba43f29c4fb0cda0f0e41e2d7e7a8da27f8
 # END images
