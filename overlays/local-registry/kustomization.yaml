@@ -1,0 +1,141 @@
+# OPTIONAL developer mode: same as overlays/local but images come from the local registry (localhost:5055) built by kuasarai/tools/k8s-build.sh. Per-machine digests: do not use on a branch other machines follow.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: kuasar-local
+resources:
+- ../../base
+- ../local/postgres
+# Secrets are created by local/secrets.sh (plain Secrets, never committed).
+configMapGenerator:
+- name: kuasar-identity
+  behavior: merge
+  literals:
+    - Email__AppBaseUrl=http://localhost:8080
+    - PublicApp__BaseUrl=http://localhost:8080
+    - Sso__PublicApiBaseUrl=http://localhost:8080
+    - Database__MaxPoolSize=4
+- name: kuasar-organization
+  behavior: merge
+  literals:
+    - Email__AppBaseUrl=http://localhost:8080
+    - PublicApp__BaseUrl=http://localhost:8080
+    - Dev__ReturnInvitationTokens=true
+    - Database__MaxPoolSize=4
+- name: kuasar-billing
+  behavior: merge
+  literals:
+    - Billing__AllowTestCheckout=true
+    - Billing__CheckoutCancelUrl=http://localhost:8080/app/billing
+    - Billing__CheckoutReturnUrl=http://localhost:8080/app/billing
+    - Billing__PortalReturnUrl=http://localhost:8080/app/billing
+    - Database__MaxPoolSize=4
+- name: kuasar-gateway
+  behavior: merge
+  literals:
+    - Cors__Origins=http://localhost:8080
+- name: kuasar-ai
+  behavior: merge
+  literals:
+    - AI__Verification__Enabled=false
+    - Database__MaxPoolSize=5
+patches:
+# --- no Cloudflare tunnel locally (traffic enters through kind port mappings) ---
+- target: {kind: Deployment, name: cloudflared}
+  patch: |-
+    $patch: delete
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata: {name: cloudflared}
+# --- the sandbox runs outside the cluster: on this Mac that is Docker Desktop (see docs/LOCAL.md, step 9) ---
+- target: {kind: EndpointSlice, name: sandbox-host}
+  patch: |-
+    $patch: delete
+    apiVersion: discovery.k8s.io/v1
+    kind: EndpointSlice
+    metadata: {name: sandbox-host}
+- target: {kind: Service, name: sandbox}
+  patch: |-
+    $patch: replace
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: sandbox
+      annotations: {argocd.argoproj.io/sync-wave: "0"}
+    spec:
+      type: ExternalName
+      externalName: host.docker.internal
+# --- no Docker Hub pull secret for the local registry ---
+- target: {kind: Deployment}
+  patch: |-
+    - {op: remove, path: /spec/template/spec/imagePullSecrets}
+- target: {kind: Job}
+  patch: |-
+    - {op: remove, path: /spec/template/spec/imagePullSecrets}
+# --- small requests so everything fits in Docker Desktop (limits are unchanged) ---
+- target: {kind: Deployment}
+  patch: |-
+    - {op: replace, path: /spec/template/spec/containers/0/resources/requests, value: {cpu: 20m, memory: 96Mi}}
+- target: {kind: Job}
+  patch: |-
+    - {op: replace, path: /spec/template/spec/containers/0/resources/requests, value: {cpu: 20m, memory: 96Mi}}
+# --- storage: kind's default class ---
+- target: {kind: PersistentVolumeClaim, name: repos}
+  patch: |-
+    - {op: replace, path: /spec/storageClassName, value: standard}
+    - {op: replace, path: /spec/resources/requests/storage, value: 5Gi}
+- target: {kind: RabbitmqCluster, name: rabbitmq}
+  patch: |-
+    - {op: replace, path: /spec/persistence/storageClassName, value: standard}
+    - {op: replace, path: /spec/persistence/storage, value: 2Gi}
+    - {op: replace, path: /spec/resources/requests, value: {cpu: 100m, memory: 256Mi}}
+# --- doors from the Mac: UI+API on localhost:8080, marketing site on localhost:3000 ---
+- target: {kind: Service, name: edge-gateway}
+  patch: |-
+    - {op: add, path: /spec/type, value: NodePort}
+    - {op: add, path: /spec/ports/0/nodePort, value: 30080}
+- target: {kind: Service, name: marketing-web}
+  patch: |-
+    - {op: add, path: /spec/type, value: NodePort}
+    - {op: add, path: /spec/ports/0/nodePort, value: 30300}
+# BEGIN images (edited by tools/set-digest.py; do not hand-edit)
+images:
+- name: docker.io/moazzamali06/kuasar-identity
+  newName: localhost:5055/kuasar-identity
+  digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+- name: docker.io/moazzamali06/kuasar-organization
+  newName: localhost:5055/kuasar-organization
+  digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+- name: docker.io/moazzamali06/kuasar-project
+  newName: localhost:5055/kuasar-project
+  digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+- name: docker.io/moazzamali06/kuasar-audit
+  newName: localhost:5055/kuasar-audit
+  digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+- name: docker.io/moazzamali06/kuasar-ai
+  newName: localhost:5055/kuasar-ai
+  digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+- name: docker.io/moazzamali06/kuasar-sandbox
+  newName: localhost:5055/kuasar-sandbox
+  digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+- name: docker.io/moazzamali06/kuasar-billing
+  newName: localhost:5055/kuasar-billing
+  digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+- name: docker.io/moazzamali06/kuasar-platform
+  newName: localhost:5055/kuasar-platform
+  digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+- name: docker.io/moazzamali06/kuasar-gateway
+  newName: localhost:5055/kuasar-gateway
+  digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+- name: docker.io/moazzamali06/kuasar-platform-web
+  newName: localhost:5055/kuasar-platform-web
+  digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+- name: docker.io/moazzamali06/kuasar-marketing-web
+  newName: localhost:5055/kuasar-marketing-web
+  digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+- name: docker.io/moazzamali06/kuasar-edge-gateway
+  newName: localhost:5055/kuasar-edge-gateway
+  digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+- name: docker.io/moazzamali06/kuasar-ai-orchestrator
+  newName: localhost:5055/kuasar-ai-orchestrator
+  digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+# END images

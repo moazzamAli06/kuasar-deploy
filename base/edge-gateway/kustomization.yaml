@@ -5,3 +5,4 @@ configMapGenerator:
 - name: edge-access
   files:
   - access.conf
+  - trusted-proxies.conf

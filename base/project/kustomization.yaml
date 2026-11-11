@@ -8,4 +8,5 @@ resources:
 configMapGenerator:
 - name: kuasar-project
   literals:
+    - Database__MaxPoolSize=10
     - GitHub__Enabled=false

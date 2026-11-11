@@ -1,0 +1,12 @@
+# "sandbox" keeps its name so ai, gateway and cloudflared need no change, but it has no selector: it points at the execution host
+# (a separate machine running Docker + gVisor, see docs/SANDBOX-HOST.md). The address lives in endpointslice.yaml, set per overlay.
+apiVersion: v1
+kind: Service
+metadata:
+  name: sandbox
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  ports:
+  - {name: http, port: 8080, targetPort: 8080}
+  - {name: preview, port: 8090, targetPort: 8090}

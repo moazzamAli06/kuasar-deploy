@@ -5,6 +5,7 @@ spec:
   description: Kuasar AI
   sourceRepos:
   - git@github.com:moazzamAli06/kuasar-deploy.git
+  - https://github.com/moazzamAli06/kuasar-deploy.git
   destinations:
   - {server: https://kubernetes.default.svc, namespace: "kuasar-*"}
   clusterResourceWhitelist: []
@@ -16,6 +17,7 @@ spec:
   - {group: networking.k8s.io, kind: NetworkPolicy}
   - {group: rabbitmq.com, kind: RabbitmqCluster}
   - {group: bitnami.com, kind: SealedSecret}
+  - {group: discovery.k8s.io, kind: EndpointSlice}
   roles:
   - name: release-manager
     description: May sync production

@@ -1,0 +1,15 @@
+# The LOCAL environment: Argo CD in the kind cluster follows the "local" branch (kept equal to main + staging digests by sync-local.yml).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata: {name: kuasar-local, namespace: argocd}
+spec:
+  project: kuasar
+  source:
+    repoURL: https://github.com/moazzamAli06/kuasar-deploy.git
+    targetRevision: local
+    path: overlays/local
+  destination: {server: https://kubernetes.default.svc, namespace: kuasar-local}
+  syncPolicy:
+    automated: {prune: true, selfHeal: true}
+    syncOptions: [ServerSideApply=true, SkipDryRunOnMissingResource=true]
+    retry: {limit: 5, backoff: {duration: 20s, factor: 2, maxDuration: 5m}}

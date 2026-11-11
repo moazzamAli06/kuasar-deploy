@@ -7,4 +7,5 @@ resources:
 configMapGenerator:
 - name: kuasar-platform
   literals:
+    - Database__MaxPoolSize=6
     - RabbitMq__ManagementPort=15672

@@ -3,7 +3,7 @@
 #   kuasar.ai/db               may reach managed PostgreSQL (port 25060)
 #   kuasar.ai/egress-https     may reach the internet on 443 (AI providers, GitHub, Stripe, e-mail)
 #   kuasar.ai/egress-internet  cloudflared tunnel (7844 and 443)
-#   kuasar.ai/egress-sandbox   may reach the sandbox Docker hosts (2376)
+#   kuasar.ai/egress-sandbox   may reach the sandbox execution host (8080 API, 8090 previews)
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata: {name: default-deny}
@@ -102,5 +102,23 @@ spec:
     matchLabels: {kuasar.ai/egress-sandbox: "true"}
   policyTypes: [Egress]
   egress:
-  - ports:
-    - {protocol: TCP, port: 2376}
+  - to:
+    - ipBlock: {cidr: 192.0.2.10/32}      # PLACEHOLDER: each overlay sets the execution host's address
+    ports:
+    - {protocol: TCP, port: 8080}
+    - {protocol: TCP, port: 8090}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: sandbox-host-ingress}
+spec:
+  podSelector:
+    matchExpressions:
+    - {key: app.kubernetes.io/name, operator: In, values: [project, organization, billing, rabbitmq]}
+  policyTypes: [Ingress]
+  ingress:
+  - from:
+    - ipBlock: {cidr: 192.0.2.0/24}       # PLACEHOLDER: the nodes' private network (NodePort traffic arrives from a node address)
+    ports:
+    - {protocol: TCP, port: 8080}
+    - {protocol: TCP, port: 5672}

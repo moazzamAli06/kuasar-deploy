@@ -7,5 +7,6 @@ resources:
 configMapGenerator:
 - name: kuasar-billing
   literals:
+    - Database__MaxPoolSize=6
     - Billing__AllowTestCheckout=false
     - Billing__Provider=test

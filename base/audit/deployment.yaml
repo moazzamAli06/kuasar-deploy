@@ -7,6 +7,9 @@ metadata:
 spec:
   replicas: 1
   revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: {maxSurge: 0, maxUnavailable: 1}
   selector:
     matchLabels:
       app.kubernetes.io/name: audit
