@@ -13,12 +13,13 @@ You: http://localhost:8080 (app + API)   http://localhost:3000 (marketing site) 
 ## Quick path (any machine)
 
 ```bash
-git clone https://github.com/moazzamAli06/kuasar-deploy.git && cd kuasar-deploy
-local/bootstrap.sh --check     # only checks Docker memory, tools, free ports; changes nothing
-local/bootstrap.sh             # creates cluster, Argo CD, secrets, app; asks for a read-only GitHub token (hidden)
-local/status.sh                # what is running, what waits and why
-local/cluster-down.sh          # remove everything
+read -rs -p "GitHub read-only token: " T; echo
+curl -fsSL -H "Authorization: Bearer $T" https://raw.githubusercontent.com/moazzamAli06/kuasar-deploy/main/local/get.sh | GITHUB_TOKEN=$T bash -s -- --check   # only checks this machine
+curl -fsSL -H "Authorization: Bearer $T" https://raw.githubusercontent.com/moazzamAli06/kuasar-deploy/main/local/get.sh | GITHUB_TOKEN=$T bash                # installs
 ```
+No git and no clone: the command downloads the small helper scripts to `~/.kuasar-local`. The cluster and Argo CD read the manifests directly from GitHub (branch `local`). Later commands: `~/.kuasar-local/local/status.sh`, `~/.kuasar-local/local/cluster-down.sh`.
+
+(From a checkout of this repo you can also run `local/bootstrap.sh --check` and `local/bootstrap.sh` directly.)
 Per-OS prerequisites and troubleshooting: `docs/LOCAL-MACOS.md`, `docs/LOCAL-WINDOWS.md` (Windows uses WSL2 Ubuntu).
 
 The sections below are the same thing step by step (what `bootstrap.sh` does). Versions live in `local/versions.env`, host ports in `local/ports.env`. Secrets are generated for this machine into `local/.env.local` (git-ignored); the `kuasarai` repo is not needed.
