@@ -8,10 +8,9 @@ use_context
 if [ "${REPO_PUBLIC:-0}" != 1 ]; then
   if [ -z "${GITHUB_TOKEN:-}" ]; then
     [ -t 0 ] || die "GITHUB_TOKEN is not set and there is no terminal to ask on"
-    [ -n "${GITHUB_USER:-}" ] || read -r -p "GitHub user name: " GITHUB_USER
     read -r -s -p "GitHub read-only token for kuasar-deploy (input hidden): " GITHUB_TOKEN; echo
   fi
-  : "${GITHUB_USER:?set GITHUB_USER}"
+  GITHUB_USER="${GITHUB_USER:-x-access-token}"   # any non-empty name works with a token
   kubectl -n argocd create secret generic repo-kuasar-deploy \
     --from-literal=type=git --from-literal=url="$DEPLOY_REPO_URL" \
     --from-literal=username="$GITHUB_USER" --from-literal=password="$GITHUB_TOKEN" \

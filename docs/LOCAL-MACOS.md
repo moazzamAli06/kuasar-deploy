@@ -16,20 +16,20 @@ Time: 15 to 25 minutes after the tools are installed (mostly image downloads). W
 ## 2. Run
 
 ```bash
-git clone https://github.com/moazzamAli06/kuasar-deploy.git
-cd kuasar-deploy
-local/bootstrap.sh --check     # changes nothing; lists what to fix
-local/bootstrap.sh             # creates cluster, Argo CD, secrets and the app
+read -rs -p "GitHub read-only token: " T; echo
+curl -fsSL -H "Authorization: Bearer $T" https://raw.githubusercontent.com/moazzamAli06/kuasar-deploy/main/local/get.sh | GITHUB_TOKEN=$T bash -s -- --check   # only checks this machine
+curl -fsSL -H "Authorization: Bearer $T" https://raw.githubusercontent.com/moazzamAli06/kuasar-deploy/main/local/get.sh | GITHUB_TOKEN=$T bash                # installs
 ```
+No git and no clone: the command downloads the small helper scripts to `~/.kuasar-local`. The cluster and Argo CD read the manifests directly from GitHub (branch `local`). Later commands: `~/.kuasar-local/local/status.sh`, `~/.kuasar-local/local/cluster-down.sh`.
 When it ends it prints the addresses: app http://localhost:8080 , marketing http://localhost:3000 , and the Argo CD login.
 
 ## 3. Daily use
 
 | Task | Command |
 |---|---|
-| What is running / what is stuck | `local/status.sh` |
+| What is running / what is stuck | `~/.kuasar-local/local/status.sh` |
 | Stop without losing data | quit Docker Desktop, or `docker stop kuasar-control-plane`; later `docker start kuasar-control-plane` |
-| Remove everything | `local/cluster-down.sh` |
+| Remove everything | `~/.kuasar-local/local/cluster-down.sh` |
 | Open the Argo CD UI | `kubectl -n argocd port-forward svc/argocd-server 8443:443` then https://localhost:8443 |
 
 ## 4. Troubleshooting
