@@ -15,7 +15,7 @@ spec:
       labels:
         app.kubernetes.io/name: edge-gateway
         app.kubernetes.io/part-of: kuasar
-        kuasar.ai/edge-only: true
+        kuasar.ai/edge-only: "true"
     spec:
       automountServiceAccountToken: false
       imagePullSecrets:
