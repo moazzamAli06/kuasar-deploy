@@ -162,6 +162,7 @@ Create the namespace's secrets BEFORE the first sync: the migration Jobs and Dep
 |---|---|---|
 | `username` | yes | must equal RabbitMq__Username |
 | `password` | yes | must equal RabbitMq__Password; create BEFORE the cluster so the operator uses it |
+| `default_user.conf` | local only | two lines, `default_user = <username>` and `default_pass = <password>`. The queue pod mounts this file. `local/secrets.sh` writes it. In the cloud the operator adds it; locally that often never happens and the pod stays stuck |
 
 ## Local environment (`kuasar-local`)
 

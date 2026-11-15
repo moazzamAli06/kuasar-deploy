@@ -31,8 +31,11 @@ for s in IDENTITY ORGANIZATION PROJECT AUDIT PLATFORM AI SANDBOX BILLING; do
 done
 secret postgres-init "${pg[@]}"
 
-# RabbitMQ default user (must exist BEFORE the cluster so the operator uses it)
-secret rabbitmq-default-user "username=$RABBITMQ_USER" "password=$RABBITMQ_PASSWORD"
+# RabbitMQ default user (must exist BEFORE the cluster so the operator uses it).
+# The queue pod mounts default_user.conf from this secret. The operator is supposed to add that
+# key later; on a local cluster it often never does, and the pod then waits forever. Write it here.
+rabbit_conf=$(printf 'default_user = %s\ndefault_pass = %s\n' "$RABBITMQ_USER" "$RABBITMQ_PASSWORD")
+secret rabbitmq-default-user "username=$RABBITMQ_USER" "password=$RABBITMQ_PASSWORD" "default_user.conf=$rabbit_conf"
 
 secret kuasar-shared "Internal__ServiceKey=$INTERNAL_SERVICE_KEY" "RabbitMq__Username=$RABBITMQ_USER" "RabbitMq__Password=$RABBITMQ_PASSWORD" \
   "Jwt__VerificationKeys__0__KeyId=$JWT_KEY_ID" "Jwt__VerificationKeys__0__PublicKeyBase64=$JWT_PUBLIC_KEY_BASE64"
