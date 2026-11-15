@@ -30,7 +30,7 @@ When it ends it prints the addresses: app http://localhost:8080 , marketing http
 | What is running / what is stuck | `~/.kuasar-local/local/status.sh` |
 | Stop without losing data | quit Docker Desktop, or `docker stop kuasar-control-plane`; later `docker start kuasar-control-plane` |
 | Remove everything | `~/.kuasar-local/local/cluster-down.sh` |
-| Open the Argo CD UI | `kubectl -n argocd port-forward svc/argocd-server 8443:443` then https://localhost:8443 |
+| Open the Argo CD UI | leave `kubectl -n argocd port-forward svc/argocd-server 8443:443` running, then https://localhost:8443. Accept the certificate warning. User `admin`. Password: `kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' \| base64 -d; echo` |
 
 ## 4. Troubleshooting
 
@@ -46,4 +46,4 @@ When it ends it prints the addresses: app http://localhost:8080 , marketing http
 
 ## 5. Sandbox (build and preview of customer projects)
 
-Not part of the cluster. See `docs/LOCAL.md` section 9: runs on Docker Desktop **without gVisor** and only for your own projects. A hardened sandbox needs a Linux machine (`docs/SANDBOX-HOST.md`).
+Not part of the cluster. See `docs/LOCAL.md` section 6: runs on Docker Desktop **without gVisor** and only for your own projects. A hardened sandbox needs a Linux machine (`docs/SANDBOX-HOST.md`).

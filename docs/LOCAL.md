@@ -39,7 +39,7 @@ Afterwards:
 |---|---|
 | What is running, what waits and why | `~/.kuasar-local/local/status.sh` |
 | Remove everything (data is lost) | `~/.kuasar-local/local/cluster-down.sh` |
-| Open the Argo CD UI | `kubectl -n argocd port-forward svc/argocd-server 8443:443`, then https://localhost:8443 |
+| Open the Argo CD UI | leave `kubectl -n argocd port-forward svc/argocd-server 8443:443` running, then https://localhost:8443. Accept the certificate warning. User `admin`. Password: `kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' \| base64 -d; echo` |
 | Update the scripts | run the install command again; it replaces `~/.kuasar-local` and keeps the cluster |
 
 If you already have a checkout of this repository, `local/bootstrap.sh --check` and `local/bootstrap.sh` do the same.

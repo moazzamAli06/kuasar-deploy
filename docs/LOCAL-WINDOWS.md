@@ -19,7 +19,11 @@ Time: 30 to 45 minutes the first time (WSL2 and Docker install), then 15 to 25 m
    processors=6
    ```
    (Use `memory=8GB` on a 16 GB machine; then expect the AI service to be the first thing to struggle.) Apply: `wsl --shutdown` in PowerShell.
-4. **Docker Desktop** (https://www.docker.com/products/docker-desktop): Settings -> General -> "Use the WSL 2 based engine" on; Settings -> Resources -> WSL integration -> turn on **Ubuntu**. In Ubuntu, `docker version` must show a Server section.
+4. **Docker Desktop** (https://www.docker.com/products/docker-desktop): Settings -> General -> "Use the WSL 2 based engine" on; Settings -> Resources -> WSL integration -> turn on **Ubuntu**. In Ubuntu, `docker info` must show a **Server** section (CPUs and memory). If it says `permission denied` on `/var/run/docker.sock`, your Ubuntu user is not allowed to use Docker yet:
+   ```bash
+   sudo usermod -aG docker $USER
+   ```
+   Close Ubuntu. In PowerShell run `wsl --shutdown`, open Ubuntu again, and run `docker info` once more.
 5. **Packages inside Ubuntu** (open the Ubuntu terminal, and stay in the Linux home `~`, never under `/mnt/c/...`: the Windows drive is very slow and can add Windows line endings):
    ```bash
    sudo apt update && sudo apt install -y curl python3 openssl coreutils
@@ -60,16 +64,33 @@ read -rs -p "GitHub read-only token: " T; echo
 curl -fsSL -H "Authorization: Bearer $T" https://raw.githubusercontent.com/moazzamAli06/kuasar-deploy/main/local/get.sh | GITHUB_TOKEN=$T bash
 ```
 
-Then open **http://localhost:8080** in Edge or Chrome on Windows (WSL forwards the port). Marketing site: http://localhost:3000. Later commands: `~/.kuasar-local/local/status.sh`, `~/.kuasar-local/local/cluster-down.sh`.
+Then open **http://localhost:8080** in Edge or Chrome on Windows (WSL forwards the port). Marketing site: http://localhost:3000.
+
+The first install often sits on the database and the queue for several minutes before the app pods appear. That is normal. Do not force a sync. Check progress with the status command below; the app is ready when it reports `Healthy` and `http://localhost:8080/health ok`.
 
 ## 3. Daily use
+
+Run these in the Ubuntu terminal. `status.sh` is a file already on the machine. Do not `curl` it into `bash`; that drops the helper files it needs and prints `./lib.sh: No such file or directory`.
 
 | Task | Command (Ubuntu terminal) |
 |---|---|
 | What is running / stuck | `~/.kuasar-local/local/status.sh` |
 | Pause | quit Docker Desktop (or `wsl --shutdown` in PowerShell); start Docker Desktop again and the cluster comes back |
 | Remove everything | `~/.kuasar-local/local/cluster-down.sh` |
-| Argo CD UI | `kubectl -n argocd port-forward svc/argocd-server 8443:443`, then https://localhost:8443 in the Windows browser |
+
+**Argo CD in the browser.** In one Ubuntu terminal, leave this running:
+
+```bash
+kubectl -n argocd port-forward svc/argocd-server 8443:443
+```
+
+In a second Ubuntu terminal, print the password:
+
+```bash
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d; echo
+```
+
+Open https://localhost:8443 in Edge or Chrome. The browser warns that the certificate is not trusted; continue anyway. Log in as `admin` with that password.
 
 ## 4. Troubleshooting
 
@@ -77,7 +98,11 @@ Then open **http://localhost:8080** in Edge or Chrome on Windows (WSL forwards t
 |---|---|
 | `missing tool: kind` or `missing tool: kubectl` | expected on the first check. The scripts are already downloaded. Run section 2b (`install-tools.sh`), then the check again |
 | `kind: command not found` after `install-tools.sh` | `~/.local/bin` is not on PATH. Run `source ~/.bashrc`, or close Ubuntu and open it again, then `kind version` |
+| `permission denied` on `/var/run/docker.sock` | Ubuntu user cannot use Docker. Step 4: `sudo usermod -aG docker $USER`, then `wsl --shutdown` in PowerShell, reopen Ubuntu |
 | `Docker is not running` or `docker: command not found` in Ubuntu | start Docker Desktop; check Settings -> Resources -> WSL integration -> Ubuntu is on |
+| `./lib.sh: No such file or directory` | `status.sh` was piped from `curl` into `bash`. Run `~/.kuasar-local/local/status.sh` instead |
+| `rabbitmq-server-0` stuck, `default_user.conf` missing | the queue secret has no password file. Run `~/.kuasar-local/local/secrets.sh`, then `kubectl -n kuasar-local delete pod rabbitmq-server-0`. Wait until that pod is `Running`; the other apps start after it. Do not force a sync |
+| `sync=OutOfSync` and only `postgres-0` and `rabbitmq-server-0` | the app waits until the queue is `Running`. Give it a few minutes and run `status.sh` again |
 | `Docker has only N GB` | the limit comes from `.wslconfig`; edit, then `wsl --shutdown`, restart Docker Desktop |
 | `bad interpreter: /bin/bash^M` or odd `$'\r'` errors | files were checked out with Windows line endings (repo cloned on `/mnt/c` or `core.autocrlf=true`): delete `~/.kuasar-local` and run the download command again from the Ubuntu terminal |
 | `port 8080 is already in use` | on Windows: `netstat -ano | findstr :8080` shows the process id; stop that program (or choose to free the port); do not stop containers you do not recognise |
