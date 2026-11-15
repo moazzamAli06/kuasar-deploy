@@ -1,0 +1,28 @@
+# Applied on top of Argo CD's own install (kubectl apply --server-side --force-conflicts -f this file). Needed since Argo CD 3.0:
+# the default resource.exclusions hides EndpointSlice, but this repository manages one on purpose (base/sandbox-host/endpointslice.yaml
+# points the "sandbox" Service at the execution host). With the default, that resource is rejected at sync ("excluded in the settings").
+# This list is Argo CD v3.6's default MINUS EndpointSlice (Endpoints stay excluded). Review it when you upgrade Argo CD.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-cm
+    app.kubernetes.io/part-of: argocd
+data:
+  resource.exclusions: |
+    - apiGroups: ['']
+      kinds: [Endpoints]
+    - apiGroups: [coordination.k8s.io]
+      kinds: [Lease]
+    - apiGroups: [authentication.k8s.io, authorization.k8s.io]
+      kinds: [SelfSubjectReview, TokenReview, LocalSubjectAccessReview, SelfSubjectAccessReview, SelfSubjectRulesReview, SubjectAccessReview]
+    - apiGroups: [certificates.k8s.io]
+      kinds: [CertificateSigningRequest]
+    - apiGroups: [cert-manager.io]
+      kinds: [CertificateRequest]
+    - apiGroups: [cilium.io]
+      kinds: [CiliumIdentity, CiliumEndpoint, CiliumEndpointSlice]
+    - apiGroups: [kyverno.io, reports.kyverno.io, wgpolicyk8s.io]
+      kinds: [PolicyReport, ClusterPolicyReport, EphemeralReport, ClusterEphemeralReport, AdmissionReport, ClusterAdmissionReport, BackgroundScanReport, ClusterBackgroundScanReport, UpdateRequest]

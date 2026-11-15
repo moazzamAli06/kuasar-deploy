@@ -18,6 +18,10 @@ spec:
   - {group: rabbitmq.com, kind: RabbitmqCluster}
   - {group: bitnami.com, kind: SealedSecret}
   - {group: discovery.k8s.io, kind: EndpointSlice}
+  - {group: autoscaling, kind: HorizontalPodAutoscaler}     # components/autoscaling
+  - {group: networking.k8s.io, kind: Ingress}               # components/ingress
+  - {group: external-secrets.io, kind: ExternalSecret}      # components/external-secrets
+  - {group: monitoring.coreos.com, kind: PrometheusRule}    # components/alerts
   roles:
   - name: release-manager
     description: May sync production

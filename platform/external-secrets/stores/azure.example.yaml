@@ -1,0 +1,9 @@
+apiVersion: external-secrets.io/v1
+kind: ClusterSecretStore
+metadata: {name: kuasar}
+spec:
+  provider:
+    azurekv:
+      authType: WorkloadIdentity
+      vaultUrl: https://kuasar-prod.vault.azure.net
+      serviceAccountRef: {name: external-secrets, namespace: external-secrets}

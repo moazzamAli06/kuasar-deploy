@@ -1,26 +1,104 @@
 name: check
 on: { pull_request: {}, push: { branches: [main] } }
+permissions:
+  contents: read
+concurrency: { group: "check-${{ github.ref }}", cancel-in-progress: true }
 jobs:
   render:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - name: Install kubeconform
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Install kubeconform (checksum verified)
         run: |
-          curl -sSL https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz | tar xz kubeconform
+          set -eu
+          v=v0.7.0
+          curl -sSLO "https://github.com/yannh/kubeconform/releases/download/$v/kubeconform-linux-amd64.tar.gz"
+          echo "c31518ddd122663b3f3aa874cfe8178cb0988de944f29c74a0b9260920d115d3  kubeconform-linux-amd64.tar.gz" | sha256sum -c -
+          tar xzf kubeconform-linux-amd64.tar.gz kubeconform
       - name: Render and validate each overlay
         run: |
           set -eu
-          for env in staging production local; do
+          for env in staging production local local-registry; do
             kubectl kustomize overlays/$env > /tmp/$env.yaml
             ./kubeconform -strict -ignore-missing-schemas -summary /tmp/$env.yaml
           done
-      - name: Policies
-        run: python3 tools/check-policies.py /tmp/staging.yaml /tmp/production.yaml /tmp/local.yaml
+      - name: Every cloud component renders on top of production
+        run: |
+          set -eu
+          for c in aws gcp azure; do
+            d=overlays/.ci-$c; mkdir -p $d
+            printf 'apiVersion: kustomize.config.k8s.io/v1beta1\nkind: Kustomization\nresources:\n- ../production\ncomponents:\n- ../../components/cloud-%s\n' $c > $d/kustomization.yaml
+            kubectl kustomize $d > /tmp/prod-$c.yaml
+            ./kubeconform -strict -ignore-missing-schemas -summary /tmp/prod-$c.yaml
+            rm -r $d
+          done
+      - name: Optional components render (external-secrets, observability, alerts)
+        run: |
+          set -eu
+          d=overlays/.ci-optional; mkdir -p $d
+          cat > $d/kustomization.yaml <<'EOF'
+          apiVersion: kustomize.config.k8s.io/v1beta1
+          kind: Kustomization
+          resources:
+          - ../production
+          components:
+          - ../../components/cloud-aws
+          - ../../components/external-secrets
+          - ../../components/observability
+          - ../../components/alerts
+          - ../../components/autoscaling
+          - ../../components/observability-external-secrets
+          patches:
+          - target: {kind: ConfigMap, name: kuasar-es-env}
+            patch: |-
+              - {op: replace, path: /data/env, value: production}
+          replacements:
+          - source: {kind: ConfigMap, name: kuasar-es-env, fieldPath: data.env}
+            targets:
+            - select: {kind: ExternalSecret}
+              fieldPaths: [spec.dataFrom.0.extract.key]
+              options: {delimiter: /, index: 1}
+          EOF
+          kubectl kustomize $d > /tmp/optional.yaml
+          grep -q 'key: kuasar/production/' /tmp/optional.yaml
+          ! grep -q 'kuasar/ENV' /tmp/optional.yaml
+          ./kubeconform -strict -ignore-missing-schemas -summary /tmp/optional.yaml
+          rm -r $d
+      - name: Ingress component renders and removes cloudflared
+        run: |
+          set -eu
+          d=overlays/.ci-ingress; mkdir -p $d
+          printf 'apiVersion: kustomize.config.k8s.io/v1beta1\nkind: Kustomization\nresources:\n- ../production\ncomponents:\n- ../../components/ingress\n' > $d/kustomization.yaml
+          kubectl kustomize $d > /tmp/ingress.yaml
+          rm -r $d
+          ./kubeconform -strict -ignore-missing-schemas -summary /tmp/ingress.yaml
+          python3 - <<'EOF'
+          import yaml
+          ds = [d for d in yaml.safe_load_all(open("/tmp/ingress.yaml")) if d]
+          assert not any(d["kind"] == "Deployment" and d["metadata"]["name"] == "cloudflared" for d in ds), "cloudflared still present"
+          assert sum(d["kind"] == "Ingress" for d in ds) == 3
+          EOF
+      - name: Generated secret files are up to date, local secrets match the catalog
+        run: |
+          pip install --quiet pyyaml
+          python3 tools/gen-secrets.py --check
+          python3 tools/check-local-secrets.py
+      - name: Platform manifests parse (kyverno policies, backup, add-ons, store examples)
+        run: |
+          set -eu
+          kubectl kustomize platform/kyverno-policies > /tmp/kyverno.yaml
+          kubectl kustomize platform/backup > /tmp/backup.yaml
+          python3 -c "import sys,yaml; [list(yaml.safe_load_all(open(f))) for f in sys.argv[1:]]" argocd/*.yaml platform/external-secrets/stores/*.yaml
+      - name: Policies (digests, non-root, hardening, requests and limits)
+        run: |
+          pip install --quiet pyyaml
+          python3 tools/check-policies.py /tmp/staging.yaml /tmp/production.yaml /tmp/local.yaml /tmp/local-registry.yaml /tmp/optional.yaml
   secrets:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with: { fetch-depth: 0 }
-      - uses: gitleaks/gitleaks-action@v2
+      - uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
         env: { GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }

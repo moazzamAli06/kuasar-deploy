@@ -1,0 +1,29 @@
+# Only images signed by the app repository's CI may run. Audit first.
+# PLACEHOLDER: the issuer and subject assume keyless cosign signing from GitHub Actions in moazzamAli06/kuasarai. Confirm how the app CI
+# signs (keyless or key pair) and adjust "attestors" before switching to Enforce. See docs/SECURITY.md.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: kuasar-verify-image-signatures
+spec:
+  validationFailureAction: Audit
+  webhookTimeoutSeconds: 30
+  rules:
+  - name: signed-by-app-ci
+    match:
+      any:
+      - resources:
+          kinds: [Pod]
+          namespaces: ["kuasar-*"]
+    verifyImages:
+    - imageReferences:
+      - "docker.io/moazzamali06/kuasar-*"
+      mutateDigest: false
+      verifyDigest: true
+      required: true
+      attestors:
+      - entries:
+        - keyless:
+            issuer: https://token.actions.githubusercontent.com
+            subject: "https://github.com/moazzamAli06/kuasarai/.github/workflows/*"
+            rekor: {url: https://rekor.sigstore.dev}

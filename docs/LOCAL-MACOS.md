@@ -10,8 +10,8 @@ Time: 15 to 25 minutes after the tools are installed (mostly image downloads). W
    brew install kind kubectl
    ```
    `python3`, `openssl` and `curl` ship with macOS (or the Xcode command line tools: `xcode-select --install`).
-3. **A read-only GitHub token** for the private repo `kuasar-deploy`: GitHub -> Settings -> Developer settings -> Fine-grained personal access tokens -> only repository `kuasar-deploy` -> permission *Contents: Read-only*. Keep it ready; the script asks for it and hides what you type. It is stored only inside your local cluster.
-4. Nothing else may use ports **8080, 3000, 30101 to 30103, 30432, 30672**. If the old compose stack is running: `docker compose down` in the `kuasarai` folder.
+3. **A read-only GitHub token** for the private repo `kuasar-deploy` (how to create it: [LOCAL.md](LOCAL.md) section 1). Keep it ready; the script asks for it and hides what you type.
+4. Nothing else may use the ports in `local/ports.env` (8080, 3000, 30101 to 30103, 30432, 30672). If the old compose stack is running: `docker compose down` in the `kuasarai` folder.
 
 ## 2. Run
 
@@ -25,12 +25,11 @@ When it ends it prints the addresses: app http://localhost:8080 , marketing http
 
 ## 3. Daily use
 
+Status, removal and the Argo CD UI are the same on every OS: see [LOCAL.md](LOCAL.md) section 1 ("Afterwards"). macOS specifics:
+
 | Task | Command |
 |---|---|
-| What is running / what is stuck | `~/.kuasar-local/local/status.sh` |
-| Stop without losing data | quit Docker Desktop, or `docker stop kuasar-control-plane`; later `docker start kuasar-control-plane` |
-| Remove everything | `~/.kuasar-local/local/cluster-down.sh` |
-| Open the Argo CD UI | leave `kubectl -n argocd port-forward svc/argocd-server 8443:443` running, then https://localhost:8443. Accept the certificate warning. User `admin`. Password: `kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' \| base64 -d; echo` |
+| Stop without losing data | quit Docker Desktop; start it again and the cluster comes back |
 
 ## 4. Troubleshooting
 

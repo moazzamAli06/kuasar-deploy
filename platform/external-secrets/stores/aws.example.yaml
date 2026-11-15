@@ -1,0 +1,11 @@
+apiVersion: external-secrets.io/v1
+kind: ClusterSecretStore
+metadata: {name: kuasar}
+spec:
+  provider:
+    aws:
+      service: SecretsManager
+      region: eu-central-1
+      auth:
+        jwt:
+          serviceAccountRef: {name: external-secrets, namespace: external-secrets}   # annotate it with the IAM role (IRSA) that may read kuasar/*

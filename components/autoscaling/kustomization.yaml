@@ -1,0 +1,28 @@
+# Component: HorizontalPodAutoscalers (CPU 70% of the request, 2 to 6 replicas) for the stateless services:
+# identity, organization, gateway, edge-gateway, platform-web, marketing-web. Needs metrics-server (DOKS, GKE and AKS have it; on EKS install it).
+# It removes "replicas" from those Deployments (after the overlay patches, so overlays/production can keep its replicas patch) so Git and
+# the autoscaler do not fight; minReplicas 2 takes over. Singletons (audit, ai, billing, platform, project, ai-orchestrator)
+# are not scaled: they are not written for several replicas (project mounts a ReadWriteOnce volume).
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+resources:
+- hpa.yaml
+patches:
+- target: {kind: Deployment, name: identity}
+  patch: |-
+    - {op: remove, path: /spec/replicas}
+- target: {kind: Deployment, name: organization}
+  patch: |-
+    - {op: remove, path: /spec/replicas}
+- target: {kind: Deployment, name: gateway}
+  patch: |-
+    - {op: remove, path: /spec/replicas}
+- target: {kind: Deployment, name: edge-gateway}
+  patch: |-
+    - {op: remove, path: /spec/replicas}
+- target: {kind: Deployment, name: platform-web}
+  patch: |-
+    - {op: remove, path: /spec/replicas}
+- target: {kind: Deployment, name: marketing-web}
+  patch: |-
+    - {op: remove, path: /spec/replicas}

@@ -1,0 +1,13 @@
+# Component: an OpenTelemetry Collector in the namespace; every service sends traces/metrics/logs to it (OTEL_EXPORTER_OTLP_ENDPOINT).
+# The collector forwards to your backend (Grafana Cloud, Datadog, Honeycomb, a self-hosted stack ...) over OTLP/HTTP on port 443.
+# Needs the Secret "otel-collector" with OTLP_ENDPOINT (https://...) and OTLP_AUTHORIZATION (full header value); see docs/SECRETS.md.
+# Check that the services speak OTLP/gRPC (the .NET default, port 4317); if they use http/protobuf change the endpoint to :4318.
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+resources:
+- otel-collector.yaml
+configMapGenerator:
+- name: kuasar-common
+  behavior: merge
+  literals:
+  - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317

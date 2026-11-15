@@ -5,7 +5,19 @@ set -uo pipefail
 kind get clusters 2>/dev/null | grep -qx "$CLUSTER_NAME" || die "no local cluster. Start with local/bootstrap.sh"
 use_context
 say "Argo CD application"
-kubectl -n argocd get application kuasar-local -o jsonpath='sync={.status.sync.status} health={.status.health.status} revision={.status.sync.revision}{"\n"}' 2>/dev/null || warn "application not found"
+sync=$(kubectl -n argocd get application kuasar-local -o jsonpath='{.status.sync.status}' 2>/dev/null || true)
+health=$(kubectl -n argocd get application kuasar-local -o jsonpath='{.status.health.status}' 2>/dev/null || true)
+rev=$(kubectl -n argocd get application kuasar-local -o jsonpath='{.status.sync.revision}' 2>/dev/null || true)
+if [ -z "$sync$health" ]; then
+  warn "application not found"
+else
+  echo "sync=${sync:-?} health=${health:-?} revision=${rev:-?}"
+  case "${sync}:${health}" in
+    Synced:Healthy) echo "The app is up to date and healthy." ;;
+    OutOfSync:Missing) echo "The app is not finished installing. If rabbitmq is not Running yet, wait and run this again. Do not force an update." ;;
+    *) echo "Something is still starting or is stuck. The pods below show which one." ;;
+  esac
+fi
 kubectl -n argocd get application kuasar-local -o jsonpath='{range .status.conditions[*]}{.type}: {.message}{"\n"}{end}' 2>/dev/null
 say "Pods"
 kubectl -n "$NAMESPACE" get pods 2>/dev/null

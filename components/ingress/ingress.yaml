@@ -1,0 +1,52 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: app
+  annotations:
+    cert-manager.io/cluster-issuer: REPLACE_CLUSTER_ISSUER
+spec:
+  ingressClassName: REPLACE_INGRESS_CLASS
+  tls:
+  - hosts: [app.REPLACE-DOMAIN.example]
+    secretName: app-tls
+  rules:
+  - host: app.REPLACE-DOMAIN.example
+    http:
+      paths:
+      - {path: /, pathType: Prefix, backend: {service: {name: edge-gateway, port: {name: http}}}}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: marketing
+  annotations:
+    cert-manager.io/cluster-issuer: REPLACE_CLUSTER_ISSUER
+spec:
+  ingressClassName: REPLACE_INGRESS_CLASS
+  tls:
+  - hosts: [www.REPLACE-DOMAIN.example]
+    secretName: marketing-tls
+  rules:
+  - host: www.REPLACE-DOMAIN.example
+    http:
+      paths:
+      - {path: /, pathType: Prefix, backend: {service: {name: marketing-web, port: {name: http}}}}
+---
+# Preview URLs of customer projects. The Cloudflare tunnel sent these straight to the sandbox host (cloudflared carries the
+# egress-sandbox label); verify against your tunnel's public hostnames in the Cloudflare dashboard. Wildcard certificates need a DNS-01 issuer.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: preview
+  annotations:
+    cert-manager.io/cluster-issuer: REPLACE_CLUSTER_ISSUER
+spec:
+  ingressClassName: REPLACE_INGRESS_CLASS
+  tls:
+  - hosts: ["*.preview.REPLACE-DOMAIN.example"]
+    secretName: preview-tls
+  rules:
+  - host: "*.preview.REPLACE-DOMAIN.example"
+    http:
+      paths:
+      - {path: /, pathType: Prefix, backend: {service: {name: sandbox, port: {name: preview}}}}

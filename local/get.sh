@@ -3,7 +3,7 @@
 #   read -rs -p "GitHub token: " T; echo; curl -fsSL -H "Authorization: Bearer $T" \
 #     https://raw.githubusercontent.com/moazzamAli06/kuasar-deploy/main/local/get.sh | GITHUB_TOKEN=$T bash -s -- --check
 # Arguments are passed to bootstrap.sh (--check = only check this machine). Run it again without --check to install.
-# The token is read-only ("Contents: Read-only" on kuasar-deploy), is kept only in the local cluster, and is never written to disk by this script.
+# The token is read-only ("Contents: Read-only" on kuasar-deploy), is kept only in the local cluster, and is never written to disk by this script. Re-running keeps local/.env.local.
 set -euo pipefail
 REPO=moazzamAli06/kuasar-deploy; REF="${SCRIPTS_REF:-main}"; DEST="${KUASAR_LOCAL_HOME:-$HOME/.kuasar-local}"
 for t in curl tar; do command -v "$t" >/dev/null || { echo "missing tool: $t" >&2; exit 1; }; done
@@ -17,8 +17,12 @@ echo "==> Downloading scripts ($REPO@$REF) to $DEST"
 curl -fsSL -H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" \
   "https://api.github.com/repos/$REPO/tarball/$REF" -o "$tmp/src.tgz" || { echo "download failed: check the token (Contents: Read-only on $REPO)" >&2; exit 1; }
 mkdir "$tmp/x" && tar xzf "$tmp/src.tgz" -C "$tmp/x" --strip-components=1
-rm -rf "$DEST"; mkdir -p "$DEST"
+# Replace scripts but KEEP local/.env.local: it holds the passwords the running cluster's database was created with.
+mkdir -p "$DEST"
+if [ -f "$DEST/local/.env.local" ]; then cp -p "$DEST/local/.env.local" "$tmp/env.local.keep"; fi
+rm -rf "$DEST/local" "$DEST/argocd"
 cp -R "$tmp/x/local" "$tmp/x/argocd" "$DEST/"
+if [ -f "$tmp/env.local.keep" ]; then cp -p "$tmp/env.local.keep" "$DEST/local/.env.local"; chmod 600 "$DEST/local/.env.local"; fi
 chmod +x "$DEST"/local/*.sh
 export GITHUB_TOKEN GITHUB_USER="${GITHUB_USER:-x-access-token}"
 exec "$DEST/local/bootstrap.sh" "$@"

@@ -33,7 +33,11 @@ while :; do
 done
 
 say "Done"
-echo "  App:            http://localhost:${EDGE_PORT}        Marketing: http://localhost:${MARKETING_PORT}"
-echo "  Argo CD UI:     kubectl -n argocd port-forward svc/argocd-server ${ARGO_PORT}:443   then https://localhost:${ARGO_PORT}"
-echo "  Argo user:      admin   password: $(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d)"
-echo "  Status anytime: local/status.sh      Remove everything: local/cluster-down.sh"
+echo "  App:            http://localhost:${EDGE_PORT}"
+echo "  Marketing:      http://localhost:${MARKETING_PORT}"
+echo "  Argo CD UI:     leave this running, then open https://localhost:${ARGO_PORT} (continue past the certificate warning)"
+echo "                  kubectl -n argocd port-forward svc/argocd-server ${ARGO_PORT}:443"
+echo "  Argo username:  admin"
+echo "  Argo password:  $(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d)"
+echo "  Status anytime: $LOCAL_DIR/status.sh"
+echo "  Remove everything: $LOCAL_DIR/cluster-down.sh"

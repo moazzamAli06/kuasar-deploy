@@ -1,0 +1,23 @@
+# Admission-time version of what tools/check-policies.py checks in CI: every container image is pinned by digest.
+# Starts in Audit (violations are reported in PolicyReports, nothing is blocked). Operator-created pods (RabbitMQ) may not use digests:
+# review the reports, then switch to Enforce, excluding what you cannot control.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: kuasar-require-image-digest
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+  - name: images-by-digest
+    match:
+      any:
+      - resources:
+          kinds: [Pod]
+          namespaces: ["kuasar-*"]
+    validate:
+      message: "Images must be pinned by digest (image@sha256:...)."
+      pattern:
+        spec:
+          containers:
+          - image: "*@sha256:*"

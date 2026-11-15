@@ -5,6 +5,8 @@ resources:
 - ../../base
 # Sealed secrets for this environment (see docs/SECRETS.md): add each file here once it exists.
 - sealed
+components:
+- ../../components/cloud-do
 configMapGenerator:
 - name: kuasar-identity
   behavior: merge

@@ -6,6 +6,8 @@ resources:
 - pdb.yaml
 # Sealed secrets for this environment (see docs/SECRETS.md): add each file here once it exists.
 - sealed
+components:
+- ../../components/cloud-do
 configMapGenerator:
 - name: kuasar-identity
   behavior: merge
@@ -38,6 +40,10 @@ patches:
 - target: {kind: NetworkPolicy, name: sandbox-host-ingress}
   patch: |-
     - {op: replace, path: /spec/ingress/0/from/0/ipBlock/cidr, value: "10.116.0.0/20"}   # TODO: the VPC range that contains the cluster nodes
+# 2 replicas: roll with a surge pod and no unavailable one, so a deploy never reduces capacity (base uses maxSurge 0 for single-replica services).
+- target: {kind: Deployment, name: "(identity|organization)"}
+  patch: |-
+    - {op: replace, path: /spec/strategy/rollingUpdate, value: {maxSurge: 1, maxUnavailable: 0}}
 - target: {kind: Deployment, name: identity}
   patch: |-
     - {op: replace, path: /spec/replicas, value: 2}

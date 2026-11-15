@@ -6,3 +6,11 @@ secrets-plain/
 .DS_Store
 local/.env.local
 local/.rendered-*
+
+# OpenTofu / Terraform
+infra/**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log

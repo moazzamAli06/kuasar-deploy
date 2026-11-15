@@ -25,7 +25,7 @@ ver_ge() { [ "$(printf '%s\n%s\n' "$2" "$1" | sort -V | head -n1)" = "$2" ]; }
 # Fills @NAME@ placeholders from the environment: render_template in out
 render_template() {
   local in=$1 out=$2 sedargs=() v
-  for v in CLUSTER_NAME KIND_NODE_IMAGE EDGE_PORT MARKETING_PORT PG_PORT BRIDGE_PROJECT_PORT BRIDGE_ORGANIZATION_PORT BRIDGE_BILLING_PORT BRIDGE_RABBITMQ_PORT; do
+  for v in DISABLE_DEFAULT_CNI CLUSTER_NAME KIND_NODE_IMAGE EDGE_PORT MARKETING_PORT PG_PORT BRIDGE_PROJECT_PORT BRIDGE_ORGANIZATION_PORT BRIDGE_BILLING_PORT BRIDGE_RABBITMQ_PORT; do
     sedargs+=(-e "s|@${v}@|${!v}|g")
   done
   sed "${sedargs[@]}" "$in" > "$out"
@@ -40,9 +40,20 @@ preflight() {
   say "Machine: $os / $arch"
   [ "$os" != unsupported ] || { warn "unsupported OS (use macOS, Linux, or Windows with WSL2 Ubuntu)"; bad=1; }
   [ "$arch" != other ] || { warn "unsupported CPU architecture"; bad=1; }
-  if [ "$os" = linux ] || [ "$os" = wsl2 ]; then :; fi
   for t in docker kind kubectl openssl curl python3 base64; do
-    command -v "$t" >/dev/null || { warn "missing tool: $t (see docs/LOCAL-$( [ "$os" = macos ] && echo MACOS || echo WINDOWS ).md)"; bad=1; }
+    if ! command -v "$t" >/dev/null; then
+      case "$t" in
+        kind|kubectl)
+          if [ "$os" = macos ]; then
+            warn "missing tool: $t. On macOS run: brew install kind kubectl"
+          else
+            warn "missing tool: $t. Run: $LOCAL_DIR/install-tools.sh    then open a new terminal"
+          fi
+          ;;
+        *) warn "missing tool: $t" ;;
+      esac
+      bad=1
+    fi
   done
   if command -v kind >/dev/null; then
     ver_ge "$(kind version | sed -n 's/^kind v\([0-9.]*\).*/\1/p')" "$KIND_MIN_VERSION" || { warn "kind is older than $KIND_MIN_VERSION"; bad=1; }
@@ -55,7 +66,13 @@ preflight() {
       [ "$mem" -ge "$MIN_DOCKER_MEMORY_GB" ] || { warn "Docker has only ${mem} GB; need at least $MIN_DOCKER_MEMORY_GB (12 advised). Docker Desktop -> Settings -> Resources (Windows: .wslconfig)"; bad=1; }
       [ "$cpus" -ge "$MIN_DOCKER_CPUS" ] || warn "Docker has ${cpus} CPUs; $MIN_DOCKER_CPUS or more advised"
     else
-      warn "Docker is not running"; bad=1
+      err=$(docker info 2>&1 >/dev/null || true)
+      if printf '%s' "$err" | grep -qi 'permission denied'; then
+        warn "Docker is installed, but this user cannot use it. Run: sudo usermod -aG docker \$USER    then open a new terminal. On Windows also run wsl --shutdown in PowerShell."
+      else
+        warn "Docker is not running. Start Docker Desktop, then run this check again."
+      fi
+      bad=1
     fi
   fi
   if ! kind get clusters 2>/dev/null | grep -qx "$CLUSTER_NAME"; then

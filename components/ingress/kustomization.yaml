@@ -1,0 +1,30 @@
+# Component: native Kubernetes Ingress INSTEAD of Cloudflare Tunnel. Removes cloudflared and routes the public hostnames to the in-cluster Services.
+# UNTESTED against a real cluster: it renders and passes the policy checks, nothing more. Needs, installed by you:
+#   - an ingress controller your cloud supports (AWS Load Balancer Controller, GKE Ingress, AKS application routing, Traefik, Envoy Gateway ...).
+#     ingress-nginx is retired upstream: do not start a new setup with it.
+#   - cert-manager with a ClusterIssuer (or the cloud's managed certificates) for TLS.
+# Set in your overlay (placeholders below are deliberately invalid):
+#   - hosts:   patch the three Ingress rules (app, marketing, preview wildcard)
+#   - class:   spec.ingressClassName            alb | gce | webapprouting.kubernetes.azure.com | traefik ...
+#   - issuer:  the cert-manager.io/cluster-issuer annotation
+#   - label the controller's namespace so the NetworkPolicy lets it reach the edge pods:  kubectl label ns <ns> kuasar.ai/ingress-controller=true
+#     (controllers that proxy from outside the cluster, like an ALB in IP mode, need an ipBlock rule for their addresses instead).
+# The visitor address: Cloudflare's CF-Connecting-IP header is gone, so the edge gateway records the controller's address unless its nginx is
+# configured to read X-Forwarded-For (that configuration is in the image, not in this repository: check it).
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+resources:
+- ingress.yaml
+patches:
+- target: {kind: Deployment, name: cloudflared}
+  patch: |-
+    $patch: delete
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata: {name: cloudflared}
+- target: {kind: NetworkPolicy, name: edge-only-from-cloudflared}
+  patch: |-
+    - op: add
+      path: /spec/ingress/0/from/-
+      value:
+        namespaceSelector: {matchLabels: {kuasar.ai/ingress-controller: "true"}}

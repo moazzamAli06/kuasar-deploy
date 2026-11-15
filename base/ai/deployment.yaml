@@ -35,6 +35,12 @@ spec:
         labelSelector:
           matchLabels:
             app.kubernetes.io/name: ai
+      - maxSkew: 1
+        topologyKey: topology.kubernetes.io/zone
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            app.kubernetes.io/name: ai
       containers:
       - name: ai
         image: docker.io/moazzamali06/kuasar-ai:replace

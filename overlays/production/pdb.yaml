@@ -45,3 +45,11 @@ spec:
   maxUnavailable: 1
   selector:
     matchLabels: {app.kubernetes.io/name: marketing-web}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata: {name: cloudflared}
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels: {app.kubernetes.io/name: cloudflared}

@@ -1,0 +1,22 @@
+# Component: secrets come from the cloud's secret manager through the External Secrets Operator instead of Sealed Secrets.
+# Use it INSTEAD of "- sealed" in an environment overlay. A component cannot see the overlay's patches, so the environment name
+# (the <env> in the remote key kuasar/<env>/<secret>) is set in the overlay with the two blocks below:
+#
+#   components: [../../components/cloud-aws, ../../components/external-secrets]
+#   patches:
+#   - target: {kind: ConfigMap, name: kuasar-es-env}
+#     patch: |-
+#       - {op: replace, path: /data/env, value: production}
+#   replacements:
+#   - source: {kind: ConfigMap, name: kuasar-es-env, fieldPath: data.env}
+#     targets:
+#     - select: {kind: ExternalSecret}
+#       fieldPaths: [spec.dataFrom.0.extract.key]
+#       options: {delimiter: /, index: 1}
+#
+# Needs: External Secrets Operator (argocd/addons-optional.yaml) and a ClusterSecretStore named "kuasar" (platform/external-secrets/stores).
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+resources:
+- externalsecrets.yaml
+- env-configmap.yaml

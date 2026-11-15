@@ -35,6 +35,12 @@ spec:
         labelSelector:
           matchLabels:
             app.kubernetes.io/name: organization
+      - maxSkew: 1
+        topologyKey: topology.kubernetes.io/zone
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            app.kubernetes.io/name: organization
       containers:
       - name: organization
         image: docker.io/moazzamali06/kuasar-organization:replace

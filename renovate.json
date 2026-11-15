@@ -1,0 +1,48 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", "helpers:pinGitHubActionDigests", ":semanticCommits"],
+  "timezone": "UTC",
+  "schedule": ["before 6am on monday"],
+  "prConcurrentLimit": 5,
+  "enabledManagers": ["github-actions", "kustomize", "kubernetes", "custom.regex", "argocd"],
+  "kubernetes": { "managerFilePatterns": ["/^base/.+\\.ya?ml$/", "/^overlays/local/postgres/.+\\.ya?ml$/"] },
+  "argocd": { "managerFilePatterns": ["/^argocd/.+\\.ya?ml$/"] },
+  "customManagers": [
+    {
+      "description": "kind node image with digest in local/versions.env",
+      "customType": "regex",
+      "managerFilePatterns": ["/^local/versions\\.env$/"],
+      "matchStrings": ["KIND_NODE_IMAGE=(?<depName>kindest/node):(?<currentValue>[^@\\s]+)@(?<currentDigest>sha256:[a-f0-9]+)"],
+      "datasourceTemplate": "docker"
+    },
+    {
+      "description": "Versions in local/versions.env: put '# renovate: datasource=... depName=...' on the line above",
+      "customType": "regex",
+      "managerFilePatterns": ["/^local/versions\\.env$/"],
+      "matchStrings": ["# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\n[A-Z_]+=(?<currentValue>\\S+)"]
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "RabbitMQ operator 2.22+ needs cert-manager for its webhook: stay on 2.21 until cert-manager is part of the install",
+      "matchPackageNames": ["rabbitmq/cluster-operator"],
+      "allowedVersions": "<2.22.0"
+    },
+    {
+      "description": "Our own images are promoted by the app repo CI (tools/set-digest.py), never by Renovate",
+      "matchPackageNames": ["/moazzamali06\\/kuasar-/"],
+      "enabled": false
+    },
+    {
+      "description": "Platform majors (Argo CD, kind node image) need a manual test on a clean cluster",
+      "matchPackageNames": ["argoproj/argo-cd", "kindest/node", "kubernetes-sigs/kind"],
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "Keep the pinned tool versions of the local setup in one PR",
+      "matchFileNames": ["local/versions.env"],
+      "groupName": "local tool versions"
+    }
+  ]
+}

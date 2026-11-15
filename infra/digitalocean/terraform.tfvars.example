@@ -1,0 +1,4 @@
+name                 = "kuasar-prod"
+region               = "fra1"
+ssh_key_fingerprints = ["aa:bb:cc:..."]
+admin_cidrs          = ["203.0.113.4/32"]

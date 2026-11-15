@@ -32,6 +32,12 @@ spec:
         labelSelector:
           matchLabels:
             app.kubernetes.io/name: marketing-web
+      - maxSkew: 1
+        topologyKey: topology.kubernetes.io/zone
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            app.kubernetes.io/name: marketing-web
       containers:
       - name: marketing-web
         image: docker.io/moazzamali06/kuasar-marketing-web:replace

@@ -1,0 +1,12 @@
+apiVersion: external-secrets.io/v1
+kind: ClusterSecretStore
+metadata: {name: kuasar}
+spec:
+  provider:
+    gcpsm:
+      projectID: my-project
+      auth:
+        workloadIdentity:
+          clusterLocation: europe-west3
+          clusterName: kuasar-prod
+          serviceAccountRef: {name: external-secrets, namespace: external-secrets}

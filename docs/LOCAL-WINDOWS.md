@@ -29,7 +29,7 @@ Time: 30 to 45 minutes the first time (WSL2 and Docker install), then 15 to 25 m
    sudo apt update && sudo apt install -y curl python3 openssl coreutils
    ```
    `kind` and `kubectl` are installed in section 2, after the helper scripts have been downloaded. They are not apt packages.
-6. **A read-only GitHub token** for `kuasar-deploy` (GitHub -> Settings -> Developer settings -> Fine-grained personal access tokens -> only that repository -> *Contents: Read-only*). The script asks for it with hidden input.
+6. **A read-only GitHub token** for `kuasar-deploy` (how to create it: [LOCAL.md](LOCAL.md) section 1). The script asks for it with hidden input.
 7. Ports **8080, 3000, 30101 to 30103, 30432, 30672** must be free on Windows (IIS, other Docker containers and some VPN or dev tools use 8080).
 
 ## 2. Run (in the Ubuntu terminal)
@@ -78,19 +78,7 @@ Run these in the Ubuntu terminal. `status.sh` is a file already on the machine. 
 | Pause | quit Docker Desktop (or `wsl --shutdown` in PowerShell); start Docker Desktop again and the cluster comes back |
 | Remove everything | `~/.kuasar-local/local/cluster-down.sh` |
 
-**Argo CD in the browser.** In one Ubuntu terminal, leave this running:
-
-```bash
-kubectl -n argocd port-forward svc/argocd-server 8443:443
-```
-
-In a second Ubuntu terminal, print the password:
-
-```bash
-kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d; echo
-```
-
-Open https://localhost:8443 in Edge or Chrome. The browser warns that the certificate is not trusted; continue anyway. Log in as `admin` with that password.
+**Argo CD in the browser, status, removal:** same commands as everywhere, see [LOCAL.md](LOCAL.md) section 1 ("Afterwards"); run them in the Ubuntu terminal and open the browser on Windows.
 
 ## 4. Troubleshooting
 

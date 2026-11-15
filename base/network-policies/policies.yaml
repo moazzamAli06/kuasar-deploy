@@ -1,6 +1,6 @@
 # Default deny, then explicit allows. Pod labels used here:
 #   kuasar.ai/edge-only        only cloudflared may call it (edge-gateway, marketing-web)
-#   kuasar.ai/db               may reach managed PostgreSQL (port 25060)
+#   kuasar.ai/db               may reach PostgreSQL (port 5432 here; overlays patch it, e.g. 25060 on DigitalOcean)
 #   kuasar.ai/egress-https     may reach the internet on 443 (AI providers, GitHub, Stripe, e-mail)
 #   kuasar.ai/egress-internet  cloudflared tunnel (7844 and 443)
 #   kuasar.ai/egress-sandbox   may reach the sandbox execution host (8080 API, 8090 previews)
@@ -62,7 +62,7 @@ spec:
   policyTypes: [Egress]
   egress:
   - ports:
-    - {protocol: TCP, port: 25060}
+    - {protocol: TCP, port: 5432}   # overlay sets the real port and should narrow "to:" to the database CIDR
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy

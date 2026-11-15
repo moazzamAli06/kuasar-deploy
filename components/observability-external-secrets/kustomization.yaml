@@ -1,0 +1,6 @@
+# Use together with components/observability AND components/external-secrets (it relies on the env replacement set up there):
+# syncs the "otel-collector" Secret from the secret manager. The ExternalSecret is generated from secrets/catalog.yaml.
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+resources:
+- externalsecrets.yaml

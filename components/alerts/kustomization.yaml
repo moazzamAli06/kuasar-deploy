@@ -1,0 +1,6 @@
+# Component: generic Kubernetes alerts for Prometheus Operator (PrometheusRule). Uses only kube-state-metrics series, so it needs
+# no application metrics. Needs the Prometheus Operator CRDs in the cluster (kube-prometheus-stack, Grafana Alloy, a cloud-managed Prometheus).
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+resources:
+- rules.yaml

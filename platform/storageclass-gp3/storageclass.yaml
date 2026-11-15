@@ -1,0 +1,11 @@
+# AWS EKS only: the gp3 StorageClass that components/cloud-aws expects (EKS ships only gp2). Apply once: kubectl apply -f platform/storageclass-gp3/storageclass.yaml
+# Needs the EBS CSI driver add-on (infra/aws installs it).
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: gp3
+provisioner: ebs.csi.aws.com
+parameters: {type: gp3, encrypted: "true"}
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true

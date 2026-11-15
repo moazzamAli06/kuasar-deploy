@@ -1,0 +1,63 @@
+# OPTIONAL cluster add-ons. Apply only what you use (kubectl apply -n argocd -f - with the document you want, or split this file).
+# Chart versions are the latest at writing time: verify them and let Renovate keep them current.
+---
+# Secrets from the cloud's secret manager (components/external-secrets). Then create the ClusterSecretStore: platform/external-secrets/stores.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata: {name: external-secrets, namespace: argocd}
+spec:
+  project: default
+  source:
+    repoURL: https://charts.external-secrets.io
+    chart: external-secrets
+    targetRevision: 2.15.0
+    helm:
+      releaseName: external-secrets
+      valuesObject: {installCRDs: true}
+  destination: {server: https://kubernetes.default.svc, namespace: external-secrets}
+  syncPolicy: {automated: {prune: true, selfHeal: true}, syncOptions: [CreateNamespace=true, ServerSideApply=true]}
+---
+# Admission policies (platform/kyverno-policies). Audit mode first.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata: {name: kyverno, namespace: argocd}
+spec:
+  project: default
+  source:
+    repoURL: https://kyverno.github.io/kyverno
+    chart: kyverno
+    targetRevision: 3.10.0
+    helm: {releaseName: kyverno}
+  destination: {server: https://kubernetes.default.svc, namespace: kyverno}
+  syncPolicy: {automated: {prune: true, selfHeal: true}, syncOptions: [CreateNamespace=true, ServerSideApply=true]}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata: {name: kyverno-policies, namespace: argocd}
+spec:
+  project: default
+  source:
+    repoURL: git@github.com:moazzamAli06/kuasar-deploy.git
+    targetRevision: main
+    path: platform/kyverno-policies
+  destination: {server: https://kubernetes.default.svc}
+  syncPolicy:
+    automated: {prune: true, selfHeal: true}
+    syncOptions: [ServerSideApply=true, SkipDryRunOnMissingResource=true]
+    retry: {limit: 5, backoff: {duration: 30s, factor: 2, maxDuration: 5m}}
+---
+# Backup schedules. Velero itself (chart "velero" from https://vmware-tanzu.github.io/helm-charts) needs a bucket and credentials for
+# your cloud: install it first, see docs/BACKUP-AND-RESTORE.md.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata: {name: backup-schedules, namespace: argocd}
+spec:
+  project: default
+  source:
+    repoURL: git@github.com:moazzamAli06/kuasar-deploy.git
+    targetRevision: main
+    path: platform/backup
+  destination: {server: https://kubernetes.default.svc, namespace: velero}
+  syncPolicy:
+    automated: {prune: true, selfHeal: true}
+    syncOptions: [ServerSideApply=true, SkipDryRunOnMissingResource=true]

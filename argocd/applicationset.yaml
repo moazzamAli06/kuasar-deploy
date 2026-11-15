@@ -20,6 +20,13 @@ spec:
       destination: {server: https://kubernetes.default.svc, namespace: "{{namespace}}"}
       syncPolicy:
         syncOptions: [CreateNamespace=true, ServerSideApply=true]
+        # Pod Security Admission: block privileged pods, report anything short of "restricted" (our workloads already comply;
+        # the RabbitMQ operator's pods are why enforce is "baseline" for now).
+        managedNamespaceMetadata:
+          labels:
+            pod-security.kubernetes.io/enforce: baseline
+            pod-security.kubernetes.io/audit: restricted
+            pod-security.kubernetes.io/warn: restricted
         retry: {limit: 3, backoff: {duration: 30s, factor: 2, maxDuration: 5m}}
   templatePatch: |
     {{- if eq .env "staging" }}

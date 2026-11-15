@@ -1,0 +1,15 @@
+# Velero schedules (Velero must be installed, with a backup location and a volume snapshot location for your cloud: docs/BACKUP-AND-RESTORE.md).
+# Kubernetes objects are re-created from Git; what needs a backup is DATA: the "repos" volume (project sources) and RabbitMQ's volume.
+# PostgreSQL is backed up by the managed database service, not here.
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: kuasar-production-daily
+  namespace: velero
+spec:
+  schedule: "0 2 * * *"
+  template:
+    includedNamespaces: [kuasar-production]
+    includedResources: [persistentvolumeclaims, persistentvolumes, secrets, configmaps]
+    snapshotVolumes: true
+    ttl: 720h

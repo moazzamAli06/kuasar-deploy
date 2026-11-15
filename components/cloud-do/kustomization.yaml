@@ -1,0 +1,15 @@
+# Cloud component: DigitalOcean Kubernetes (DOKS) with Managed PostgreSQL (port 25060)
+# Use it from an environment overlay:   components: [../../components/cloud-do]
+# Sets only what differs between clouds: the storage class and the managed-database port. Edit the policy "to:" CIDR in the overlay if you can narrow it.
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+patches:
+- target: {kind: PersistentVolumeClaim, name: repos}
+  patch: |-
+    - {op: add, path: /spec/storageClassName, value: do-block-storage}
+- target: {kind: RabbitmqCluster, name: rabbitmq}
+  patch: |-
+    - {op: add, path: /spec/persistence/storageClassName, value: do-block-storage}
+- target: {kind: NetworkPolicy, name: db-egress}
+  patch: |-
+    - {op: replace, path: /spec/egress/0/ports/0/port, value: 25060}

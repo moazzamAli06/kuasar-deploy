@@ -1,8 +1,12 @@
 # Run Kuasar AI on a laptop with Argo CD (kind)
 
-Status: written 2026-11-13, not yet run end to end on a second machine (see "Known limits").
+What you get: a local Kubernetes cluster (kind) where **Argo CD watches this GitHub repository** (branch `local`, folder `overlays/local`) and deploys the app the same way it runs in the cloud (DigitalOcean today; other clouds need only a storage class and database port, see section 3). You do **not** clone this repository: the cluster and Argo CD read it from GitHub, and a small download provides the helper scripts.
 
-What you get: a local Kubernetes cluster (kind) where **Argo CD watches this GitHub repository** (branch `local`, folder `overlays/local`) and deploys the app the same way it will later run on DigitalOcean. You do **not** clone this repository: the cluster and Argo CD read it from GitHub, and a small download provides the helper scripts.
+Follow the guide for your computer. This page is the map. The install steps are in the OS guide.
+
+- Windows (WSL2): [LOCAL-WINDOWS.md](LOCAL-WINDOWS.md)
+- macOS (Intel and Apple Silicon): [LOCAL-MACOS.md](LOCAL-MACOS.md)
+- Linux: [LOCAL-LINUX.md](LOCAL-LINUX.md)
 
 ```
 GitHub kuasar-deploy, branch "local"  (= main + the staging image digests, kept by .github/workflows/sync-local.yml)
@@ -13,11 +17,11 @@ kind cluster "kuasar":  Postgres, RabbitMQ, 8 services, gateways, web   <- image
 You:  http://localhost:8080 (app + API)   http://localhost:3000 (marketing)   https://localhost:8443 (Argo CD UI, via port-forward)
 ```
 
-Works on macOS (Intel, Apple Silicon), Linux and Windows (inside WSL2). Prerequisites and troubleshooting per OS: [LOCAL-MACOS.md](LOCAL-MACOS.md), [LOCAL-WINDOWS.md](LOCAL-WINDOWS.md).
-
 ## 1. Quick path
 
-You need Docker, `kind`, `kubectl`, `curl`, `tar`, `python3`, `openssl` and a **read-only GitHub token** (fine-grained, only repository `kuasar-deploy`, permission *Contents: Read-only*).
+You need Docker, `kind`, `kubectl`, `curl`, `tar`, `python3`, `openssl` and a **read-only GitHub token** (fine-grained, only repository `kuasar-deploy`, permission *Contents: Read-only*). On Windows, install `kind` and `kubectl` in the middle of the steps in [LOCAL-WINDOWS.md](LOCAL-WINDOWS.md). The first check is expected to stop and say they are missing.
+
+`--check` only tests the machine. It does not install the app. Run the same command without `--check` to install.
 
 ```bash
 read -rs -p "GitHub read-only token: " T; echo
@@ -40,11 +44,13 @@ Afterwards:
 | What is running, what waits and why | `~/.kuasar-local/local/status.sh` |
 | Remove everything (data is lost) | `~/.kuasar-local/local/cluster-down.sh` |
 | Open the Argo CD UI | leave `kubectl -n argocd port-forward svc/argocd-server 8443:443` running, then https://localhost:8443. Accept the certificate warning. User `admin`. Password: `kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' \| base64 -d; echo` |
-| Update the scripts | run the install command again; it replaces `~/.kuasar-local` and keeps the cluster |
+| Update the scripts | run the install command again; it replaces the scripts in `~/.kuasar-local`, keeps the cluster and keeps `local/.env.local` (the database passwords) |
 
 If you already have a checkout of this repository, `local/bootstrap.sh --check` and `local/bootstrap.sh` do the same.
 
 ## 2. Configuration files
+
+The cluster-specific parts of the local setup (storage class) come from `components/cloud-kind`; see [ARCHITECTURE.md](ARCHITECTURE.md).
 
 | File | What |
 |---|---|
@@ -54,21 +60,22 @@ If you already have a checkout of this repository, `local/bootstrap.sh --check` 
 
 ## 3. What is different from the cloud (everything in `overlays/local`)
 
-- Postgres runs as a pod (`overlays/local/postgres`), initialised by the same `init-databases.sh` as docker compose; in the cloud it is DigitalOcean Managed PostgreSQL.
+- Postgres runs as a pod (`overlays/local/postgres`), initialised by the same `init-databases.sh` as docker compose; in the cloud it is a managed PostgreSQL (DigitalOcean today; the overlay sets the port, 25060 there and 5432 elsewhere).
 - Plain Kubernetes Secrets created by `local/secrets.sh`; in the cloud Sealed Secrets.
-- Images: public Docker Hub images by digest, no pull secret. The digests on branch `local` are copied from staging, so local runs what staging runs.
+- Images: public Docker Hub images by digest, no pull secret. On branch `main`, `overlays/local` lists every image as `sha256:000…0`. Those are placeholders and cannot be pulled. Branch `local` copies the real digests from staging, and that is the branch the laptop follows.
 - Traffic enters through kind port mappings and NodePorts instead of Cloudflare Tunnel (`cloudflared` is removed).
+- Storage uses kind's `standard` class; `base/` sets no storage class, each overlay does (staging and production: `do-block-storage`; change it for AWS `gp3`, GCP `premium-rwo`, Azure `managed-csi`).
 - Small resource requests (limits unchanged), 1 replica each, small volumes, test settings: emails are logged, billing is the test provider with test checkout allowed, invitation tokens are returned, AI answer verification is off.
 - The sandbox is not in the cluster (section 6).
 
 ## 4. The branch `local`
 
-`.github/workflows/sync-local.yml` rebuilds branch `local` after every push to `main`: `main` plus one commit that copies the digests of `overlays/staging` into `overlays/local`. Never commit to it by hand. If that workflow fails, create or refresh the branch manually:
+`.github/workflows/sync-local.yml` rebuilds branch `local` after every push to `main`: `main` plus one commit that copies the digests of `overlays/staging` into `overlays/local`. It force-pushes that branch. That is normal. Never commit to it by hand. If the workflow fails, create or refresh the branch manually:
 ```bash
 git checkout -B local origin/main && python3 tools/promote.py overlays/staging overlays/local
 git commit -am "local: staging digests" && git push --force origin local
 ```
-(As of 2026-11-13 the workflow had not produced the branch; it was created by hand. A likely cause is the default `GITHUB_TOKEN` not being allowed to push a branch that contains workflow files; check the Actions log.)
+If the workflow cannot push, check the Actions log. A common cause is the default `GITHUB_TOKEN` not being allowed to push a branch that contains workflow files.
 
 ## 5. GitOps drills (what Argo CD is for)
 
@@ -94,7 +101,8 @@ Only for the machine that builds images (needs the `kuasarai` repo next to a che
 
 ## 8. Known limits
 
-- **Not proven yet:** `bootstrap.sh`, the Argo CD sync and the migrations have only been tested in pieces (machine check, template rendering, secret generation, cluster creation once). Expect small fixes on the first full run (read-only filesystem paths, probe timings) and report what `status.sh` shows.
-- kind's default network layer does not enforce NetworkPolicy, so the policies in `base/` are present but untested here.
+- The first Windows run needed three things the check now names directly: the Ubuntu user in the `docker` group, `kind` and `kubectl` from `install-tools.sh`, and the RabbitMQ password file (`default_user.conf`, written by `secrets.sh`). The app pods start only after `rabbitmq-server-0` is `Running`. Do not force a sync while it is still starting.
+- kind's default network layer does not enforce NetworkPolicy, so the policies in `base/` are present but untested here. To enforce them (as in the cloud), create the cluster with Calico: `NETWORK_POLICY=1 local/bootstrap.sh` on a fresh cluster (`cluster-down.sh` first). Experimental: the local overlay has not been validated under enforcement, so expect to adjust policies such as the sandbox egress rule.
+- The **smoke** workflow (`.github/workflows/smoke.yml`, manual and weekly) runs `bootstrap.sh` end to end on a CI runner and checks `/health`.
 - Memory: requests are small but limits are the production ones; with less than 12 GB, pods can be evicted.
 - Windows on ARM is untested.

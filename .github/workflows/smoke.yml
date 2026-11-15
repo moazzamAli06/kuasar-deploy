@@ -1,0 +1,33 @@
+name: smoke
+# End-to-end test of the laptop path: kind + Argo CD + the app, using the real local/bootstrap.sh against branch "local".
+# Manual and weekly (it needs ~8 GB of memory and 10+ minutes), not on every PR. If the runner is too small, use a larger runner.
+on:
+  workflow_dispatch:
+    inputs:
+      network_policy: { description: "Install Calico so NetworkPolicies are enforced", type: boolean, default: false }
+  schedule:
+    - cron: "17 5 * * 1"
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Install pinned kind and kubectl
+        run: |
+          local/install-tools.sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Bootstrap (cluster, Argo CD, secrets, app) and wait until Healthy
+        env:
+          GITHUB_USER: x-access-token
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NETWORK_POLICY: ${{ inputs.network_policy && '1' || '0' }}
+          SYNC_TIMEOUT_MIN: "35"
+        run: local/bootstrap.sh
+      - name: Health through the gateway
+        run: curl -fsS -m 10 http://localhost:8080/health
+      - name: Diagnostics on failure
+        if: failure()
+        run: local/status.sh || true

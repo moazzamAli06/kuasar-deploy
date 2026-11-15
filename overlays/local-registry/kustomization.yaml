@@ -5,6 +5,8 @@ namespace: kuasar-local
 resources:
 - ../../base
 - ../local/postgres
+components:
+- ../../components/cloud-kind
 # Secrets are created by local/secrets.sh (plain Secrets, never committed).
 configMapGenerator:
 - name: kuasar-identity
@@ -78,14 +80,12 @@ patches:
 - target: {kind: Job}
   patch: |-
     - {op: replace, path: /spec/template/spec/containers/0/resources/requests, value: {cpu: 20m, memory: 96Mi}}
-# --- storage: kind's default class ---
+# --- storage: class "standard" comes from components/cloud-kind; only the sizes are set here ---
 - target: {kind: PersistentVolumeClaim, name: repos}
   patch: |-
-    - {op: replace, path: /spec/storageClassName, value: standard}
     - {op: replace, path: /spec/resources/requests/storage, value: 5Gi}
 - target: {kind: RabbitmqCluster, name: rabbitmq}
   patch: |-
-    - {op: replace, path: /spec/persistence/storageClassName, value: standard}
     - {op: replace, path: /spec/persistence/storage, value: 2Gi}
     - {op: replace, path: /spec/resources/requests, value: {cpu: 100m, memory: 256Mi}}
 # --- doors from the Mac: UI+API on localhost:8080, marketing site on localhost:3000 ---
@@ -97,7 +97,7 @@ patches:
   patch: |-
     - {op: add, path: /spec/type, value: NodePort}
     - {op: add, path: /spec/ports/0/nodePort, value: 30300}
-# BEGIN images (edited by tools/set-digest.py; do not hand-edit)
+# BEGIN images (zeros until this machine builds its own images; see docs/LOCAL.md section 7. Do not hand-edit.)
 images:
 - name: docker.io/moazzamali06/kuasar-identity
   newName: localhost:5055/kuasar-identity

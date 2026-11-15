@@ -1,6 +1,6 @@
 # The sandbox execution host
 
-Customer code runs on a separate machine (a DigitalOcean Droplet, or a Linux VM locally) with Docker and **gVisor (`runsc`)**, never in this cluster. Why: the sandbox joins each run's Docker network and proxies previews to container addresses on it, so it must live on the same Docker host (`kuasarai/docs/operations/blocker-solutions.md`, section 4; ADR-0010).
+Customer code runs on a separate machine (a VM in the same private network as the cluster: a DigitalOcean Droplet, AWS EC2, Google Compute Engine or Azure VM, or a Linux VM locally) with Docker and **gVisor (`runsc`)**, never in this cluster. Why: the sandbox joins each run's Docker network and proxies previews to container addresses on it, so it must live on the same Docker host (`kuasarai/docs/operations/blocker-solutions.md`, section 4; ADR-0010).
 
 In the cluster:
 - `Service sandbox` has **no selector**; `EndpointSlice sandbox-host` points at the host's private address (set per overlay, currently the placeholder `192.0.2.10`). `ai`, `gateway` and `cloudflared` keep calling `sandbox:8080` / `:8090`.

@@ -1,6 +1,10 @@
 # Secrets each environment needs
 
+> Generated from `secrets/catalog.yaml` by `tools/gen-secrets.py`: edit the catalog, not this file.
+
 Nothing here goes into Git in plain text. Create each Secret locally, seal it with `tools/seal-secrets.sh`, commit the sealed file under `overlays/<env>/sealed/`, and list it in that folder's `kustomization.yaml`.
+
+Instead of sealing, you can keep the values in your cloud's secret manager and sync them with the External Secrets Operator (`components/external-secrets`, see [SECURITY.md](SECURITY.md)); the secret and key names below are the same either way.
 
 Create the namespace's secrets BEFORE the first sync: the migration Jobs and Deployments refuse to start without them.
 
@@ -72,6 +76,7 @@ Create the namespace's secrets BEFORE the first sync: the migration Jobs and Dep
 |---|---|---|
 | `ConnectionStrings__Identity` | yes |  |
 | `SecretBox__Key` | yes |  |
+| `Platform__AdminEmail` | only if the feature is used | first platform operator (still has to enrol MFA) |
 | `Platform__AdminInitialPassword` | only if the feature is used |  |
 | `Jwt__KeyId` | yes |  |
 | `Jwt__PrivateKeyBase64` | yes |  |
@@ -155,6 +160,13 @@ Create the namespace's secrets BEFORE the first sync: the migration Jobs and Dep
 | `Jwt__VerificationKeys__0__KeyId` | yes |  |
 | `Jwt__VerificationKeys__0__PublicKeyBase64` | yes |  |
 | `OTEL_EXPORTER_OTLP_HEADERS` | only if the feature is used |  |
+
+## `otel-collector` (only with `components/observability`)
+
+| Key | Required | Note |
+|---|---|---|
+| `OTLP_ENDPOINT` | yes | base URL of your OTLP/HTTP backend, `https://...` |
+| `OTLP_AUTHORIZATION` | yes | full value of the `Authorization` header, for example `Basic ...` or `Bearer ...` |
 
 ## `rabbitmq-default-user`
 

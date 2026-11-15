@@ -1,0 +1,9 @@
+# Local-only: used by the replacement in kustomization.yaml and dropped from the rendered output.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kuasar-es-env
+  annotations:
+    config.kubernetes.io/local-config: "true"
+data:
+  env: ENV
